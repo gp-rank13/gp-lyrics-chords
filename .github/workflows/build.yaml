@@ -35,7 +35,7 @@ jobs:
             - name: Checkout pizmidi
               uses: actions/checkout@v4
             - name: "Ccache"
-              uses: hendrikmuhs/ccache-action@ed038da2f2f09b0c8387c00e1498290a4808da2e # v1.2.2
+              uses: hendrikmuhs/ccache-action@2a51777f6f64b7b7bea213601acba8f5f4fdbe03 # v1.2.11
               if: env.CCACHE_AVAILABLE == 'true'
               with:
                   key: ${{ matrix.config.os }}-${{ matrix.config.cmake_preset }}
