@@ -491,11 +491,11 @@ public:
           if (chordProSmallChordFont && label.getProperties()["type"] == "chordAndLyrics") {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.05, label.getWidth(), label.getHeight() / 2,
-            Justification::centredLeft, 1, 1.0f);
+            Justification::centredLeft, 2, 1.0f);
           } else {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.025, label.getWidth(), label.getHeight() / 2,
-            Justification::topLeft, 1, 1.0f);
+            Justification::topLeft, 2, 1.0f);
           }
           lastChordPosition = lastWordPosition + font.getStringWidthFloat(wordParts[j]);// + (label.getHeight() / 4);
           if (label.getProperties()["type"] == "chordAndLyrics") {
@@ -510,7 +510,7 @@ public:
           g.setFont (font);
           g.drawFittedText ( wordParts[j],
             lastWordPosition + leftPad, 0, label.getWidth(), label.getHeight(),
-            Justification::bottomLeft, 1, 1.0f);
+            Justification::bottomLeft, 2, 1.0f);
           chord = "";
           priorPartIsChord = false;
           lastWordPosition += font.getStringWidthFloat(wordParts[j]);

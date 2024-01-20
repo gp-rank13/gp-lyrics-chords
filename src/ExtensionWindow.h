@@ -223,6 +223,7 @@ public:
   int static getButtonSelected();
   int static getVisibleButtonCount();
   int static getVisibleSubButtonCount();
+  void static incrementButton(int increment);
   bool static getDisplayVariationForSongPartStatus();
   void static selectButton(int index);
   void static selectSetlistButton(int index);
@@ -369,6 +370,8 @@ public:
   bool fitHeight = false;
   bool prefsLoaded = false;
   bool pendingDisplayWindow = false;
+  bool windowPinned = false;
+  bool windowFullscreen = false;
   std::unique_ptr<int> switchImmediately;
   int prevButtonSelected = 0;
   std::unique_ptr<Label> highlight;
@@ -402,6 +405,7 @@ public:
   std::unique_ptr<ShapeButton> fitWidthButton;
   std::unique_ptr<ShapeButton> fitHeightButton;
   std::unique_ptr<ShapeButton> closeButton;
+  std::unique_ptr<ShapeButton> preferencesButton;
   Image menuIcon;
   ImageComponent menuIconComponent;
 

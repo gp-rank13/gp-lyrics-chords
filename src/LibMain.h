@@ -60,6 +60,8 @@ public:
 
         listenForWidget(WIDGET_SELECTOR, true);
         listenForWidget(WIDGET_SCROLL, true);
+        listenForWidget(WIDGET_PREVIOUS, true);
+        listenForWidget(WIDGET_NEXT, true);
         listenForWidget(WIDGET_CP_SCROLL, true);
         listenForWidget(WIDGET_CP_UP, true);
         listenForWidget(WIDGET_CP_DOWN, true);

@@ -57,6 +57,7 @@ void LibMain::InvokeMenu(int index)
                     break;
                 */
                   case 1:
+                    ExtensionWindow::displayWindow(true);
                     ExtensionWindow::displayPreferences();
                     break;
                   default:
@@ -310,6 +311,10 @@ void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValu
         ExtensionWindow::chordProUp();
     } else if(widgetName == WIDGET_CP_DOWN && newValue == 1.0) {
         ExtensionWindow::chordProDown();
+    } else if(widgetName == WIDGET_PREVIOUS && newValue == 1.0) {
+        ExtensionWindow::incrementButton(-1);
+    } else if(widgetName == WIDGET_NEXT && newValue == 1.0) {
+        ExtensionWindow::incrementButton(1);
     } 
 }
 

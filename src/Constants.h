@@ -24,6 +24,8 @@ const std::string SONG_WINDOW_TITLE = "GP Lyrics/Chords";
 // Widget names used in the extension
 const std::string WIDGET_SELECTOR = "GPLC_OPEN";
 const std::string WIDGET_SCROLL = "GPLC_SONG_SCROLL";
+const std::string WIDGET_PREVIOUS = "GPLC_PREV";
+const std::string WIDGET_NEXT = "GPLC_NEXT";
 const std::string WIDGET_CP_SCROLL = "GPLC_SCROLL";
 const std::string WIDGET_CP_UP = "GPLC_UP";
 const std::string WIDGET_CP_DOWN = "GPLC_DOWN";
