@@ -58,7 +58,7 @@ public:
         registerCallback("OnModeChanged");
         registerCallback("OnWidgetValueChanged");
 
-        listenForWidget(WIDGET_SELECTOR, true);
+        listenForWidget(WIDGET_DISPLAY, true);
         listenForWidget(WIDGET_SCROLL, true);
         listenForWidget(WIDGET_PREVIOUS, true);
         listenForWidget(WIDGET_NEXT, true);

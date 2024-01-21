@@ -284,6 +284,8 @@ void LibMain::OnSetlistChanged(const std::string&) {
         ExtensionWindow::updateButtonNames(getSongNames());
         ExtensionWindow::selectButton(getCurrentSongIndex());
         ExtensionWindow::selectSetlistButton(getCurrentSetlistIndex());
+        ExtensionWindow::chordProReadFile(getCurrentSongIndex());
+
     }
 }
 
@@ -297,7 +299,7 @@ void LibMain::OnModeChanged(int mode) {
 
 // Handle widget changes
 void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValue) {
-    if (widgetName == WIDGET_SELECTOR) {
+    if (widgetName == WIDGET_DISPLAY) {
         if (newValue == 1.0) {
          ExtensionWindow::displayWindow(true);
         } else {

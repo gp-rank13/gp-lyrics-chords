@@ -702,9 +702,6 @@ void ExtensionWindow::resized()
             if (chordProLines[i]->isVisible() && !(chordProImagesOnly && chordProLines[i]->getProperties()["type"] == "")) {
                 if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics") {
                     rowHeight = 80.0 * chordProFontSize;
-                    /*Font labelFont (Font (chordProLines[i]->getHeight() * 0.5f, Font::plain));
-                    int labelWidth = labelFont.getStringWidth(chordProLines[i]->getText());
-                    if (labelWidth > chordProContainer.getWidth()) rowHeight = 160.0 * chordProFontSize;*/
                 } else if (chordProLines[i]->getProperties()["type"] == "title") {
                     rowHeight = 80.0 * chordProFontSize;
                 } else if (chordProLines[i]->getProperties()["type"] == "subtitle") {
@@ -749,6 +746,78 @@ void ExtensionWindow::resized()
                 }
                 chordProLines[i]->setBounds(10, runningHeight, chordProContainer.getWidth(), rowHeight);
                 runningHeight += rowHeight;
+
+                // Wrapping text
+                if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics" || chordProLines[i]->getProperties()["type"] == "lyricOnly") {
+                    Font labelFont (Font (chordProLines[i]->getHeight() * 0.5f, Font::plain));
+                    if (chordProLines[i]->getProperties()["type"] == "lyricOnly") labelFont.setHeight(chordProLines[i]->getHeight());
+                    if (chordProMonospaceFont) {
+                        labelFont.setTypefaceName(Font::getDefaultMonospacedFontName());
+                    } else {
+                        labelFont = labelFont.withTypefaceStyle("Regular").withExtraKerningFactor(0.06f);
+                    }
+                    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+                    String excludeChords = std::regex_replace(chordProLines[i]->getProperties()["originalText"].toString().toStdString(), std::regex("\\[(.*?)\\]"), "");
+                    int labelWidth = labelFont.getStringWidth(excludeChords) + leftPad;
+                    if (labelWidth > chordProContainer.getWidth()) {
+                        if (chordProLines[i]->getName() != "wrap") {
+                   
+                        if (i < chordProLines.size() - 1) {
+                            if (chordProLines[i+1]->getName() != "wrap") { // Wrapped line doesn't yet exist - create one
+                                auto label = new Label("wrap", ""); 
+                                chordProLines.insert(i + 1, label);
+                                chordProLines[i+1]->setEditable (false, false, false);
+                                chordProLines[i+1]->setLookAndFeel(chordProLnF);
+                                chordProLines[i+1]->setInterceptsMouseClicks(false, false);
+                                chordProContainer.addAndMakeVisible(chordProLines[i+1]);
+
+                               
+                                //chordProLines[i+1]->setText(wrappedText, dontSendNotification);
+                                //chordProLines[i+1]->getProperties().set("wrap","true");
+                                chordProLines[i+1]->getProperties().set("type", chordProLines[i]->getProperties()["type"]);
+                                chordProLines[i+1]->getProperties().set("section", chordProLines[i]->getProperties()["section"]); 
+                                //chordProLines[i]->getProperties().set("wrap","false");
+                            }
+                            // Update label text on both wrapped lines
+                            int wrapPosition = labelWidth - (labelWidth - chordProContainer.getWidth());
+                            StringArray words = StringArray::fromTokens(excludeChords,false);
+                            words.removeEmptyStrings();
+                            int runningTextWidth = 0;
+                            int wordIndex = 0;
+                            for (int i = 0; i < words.size(); ++i) { 
+                                runningTextWidth += labelFont.getStringWidth(words[i] + " ");
+                                if (runningTextWidth + leftPad > wrapPosition) {
+                                    if (wordIndex == 0)
+                                    wordIndex = i;
+                                }
+                            }
+                            String firstLine = "";
+                            String secondLine = "";
+                            words = StringArray::fromTokens(chordProLines[i]->getProperties()["originalText"].toString(),false);
+                            words.removeEmptyStrings();
+                            for (int i = 0; i < words.size(); ++i) {  
+                                if (i < wordIndex) firstLine += words[i] + " ";
+                                if (i >= wordIndex) secondLine += words[i] + " ";
+                            }
+                            if (!secondLine.contains("[")) {
+                                chordProLines[i+1]->getProperties().set("type","lyricOnly");
+                            } else {
+                                chordProLines[i+1]->getProperties().set("type","chordAndLyrics");
+                            }
+                            chordProLines[i]->setText(firstLine, dontSendNotification);
+                            chordProLines[i+1]->setText(secondLine, dontSendNotification);
+                        }
+                        }
+                    } else {
+                        if (i < chordProLines.size() - 1) {
+                            if (chordProLines[i + 1]->getName() == "wrap") {
+                                //chordProLines[i]->getProperties().set("wrap","false");
+                                chordProLines.remove(i+1, true);
+                                chordProLines[i]->setText(chordProLines[i]->getProperties()["originalText"], dontSendNotification);
+                            }
+                        }   
+                    }
+                }
             } else {
                 chordProLines[i]->setBounds(10,runningHeight,chordProContainer.getWidth(),0);
             }
@@ -1575,7 +1644,7 @@ void ExtensionWindow::displayWindow(bool display) {
     }
     if (extension->extensionWindow->isVisible() != display) {
         extension->extensionWindow->setVisible(display);
-        lib->setWidgetValue(WIDGET_SELECTOR, (display == true ? 1.0 : 0.0));
+        lib->setWidgetValue(WIDGET_DISPLAY, (display == true ? 1.0 : 0.0));
     }
     if (display)
             extension->extensionWindow->toFront(true);
@@ -1850,8 +1919,11 @@ void ExtensionWindow::chordProProcessText(std::string text) {
         if (line.trim() != "") firstLineWithContent = true;
         if (firstLineWithContent) {
             extension->chordProLines[i]->setVisible(true);
+            extension->chordProLines[i]->setName("");
             extension->chordProLines[i]->getProperties().set("section", ""); 
             extension->chordProLines[i]->getProperties().set("sectionLabel", ""); 
+            extension->chordProLines[i]->getProperties().set("originalText", ""); 
+            //extension->chordProLines[i]->getProperties().set("wrap", "");           
             if (line.contains("{")) { // Directive
                 extension->chordProLines[i]->getProperties().set("type", "directive"); 
                 line = line.removeCharacters("{}");
@@ -2033,6 +2105,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     extension->chordProLines[i]->getProperties().set("type", "lyricOnly"); 
                 }
                 extension->chordProLines[i]->setText(line.trim(), dontSendNotification);
+                extension->chordProLines[i]->getProperties().set("originalText", line.trim()); 
             }
         }
         if (!(directiveName == "image" || directiveName == "songpartname" || (extension->chordProLines[i]->getProperties()["type"] == ""))) {
@@ -2255,6 +2328,7 @@ void ExtensionWindow::displaySetlistContainer(bool display) {
 void ExtensionWindow::displayPreferences() {
     extension->chordProContainer.setVisible(false);
     extension->containerRight.setVisible(false);
+    displayFontContainer(false);
     extension->preferencesContainer.setVisible(true);
     viewPortBackground = Colour::fromString(BACKGROUND_COLOR);
 
