@@ -2100,6 +2100,10 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                         line = words.joinIntoString(" ", 0, -1);
                     } else {
                         extension->chordProLines[i]->getProperties().set("type", "chordAndLyrics"); 
+                        // Minor cleanup for chords & lyrics
+                        line = std::regex_replace(line.toStdString(), std::regex("\\  +"), " ");
+                        line = std::regex_replace(line.toStdString(), std::regex("(\\]\\s)(?!\\s\\[)"), "]");
+                        
                     }
                 } else if (line.trim() != "" && !gridLine && !tabLine){
                     extension->chordProLines[i]->getProperties().set("type", "lyricOnly"); 
