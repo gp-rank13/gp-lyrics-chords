@@ -676,7 +676,7 @@ public:
         font2.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
            //font2.setTypefaceName("Sergoe UI Symbol");
-           font2.setTypefaceName("Arial Unicode MS");
+           font2.setTypefaceName("Lucida Sans Unicode");
         #endif
 
 
