@@ -661,10 +661,12 @@ public:
       if (character == "|") {
         juce::AttributedString attrString;
         if ( nextCharacter == "|") {
-          attrString.setText( L"𝄁" );
+          //attrString.setText( L"𝄁" );
+          attrString.setText(juce::String::charToString(0x1D101));
           text = text.replaceSection(i + 1, 1, "");
         } else {
-          attrString.setText( L"𝄀" );
+          //attrString.setText( L"𝄀" );
+          attrString.setText(juce::String::charToString(0x1D100));
         }
         //character = "𝄁";
         //auto newCharacter(juce::AttributedString("𝄁"));
