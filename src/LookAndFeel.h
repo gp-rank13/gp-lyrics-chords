@@ -672,6 +672,11 @@ public:
         //runningTextWidth += (int) font.getStringWidthFloat(character);
         Font font2 (Font (label.getHeight() * 2.0f, Font::plain));
         font2.setTypefaceName(Font::getDefaultMonospacedFontName());
+        #if JUCE_WINDOWS
+           font2.setTypefaceName("Sergoe UI Symmbol");
+        #endif
+
+
         attrString.setFont( font2 );
         attrString.setJustification( juce::Justification::centredLeft );
         //attrString.setWordWrap( juce::AttributedString::WordWrap::none );
