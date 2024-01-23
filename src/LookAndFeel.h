@@ -673,7 +673,7 @@ public:
         Font font2 (Font (label.getHeight() * 2.0f, Font::plain));
         font2.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
-           font2.setTypefaceName("Sergoe UI Symmbol");
+           font2.setTypefaceName("Sergoe UI Symbol");
         #endif
 
 
