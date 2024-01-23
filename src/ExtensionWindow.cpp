@@ -1444,7 +1444,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         resized();
     } else if (buttonThatWasClicked == fullscreenActivateButton.get() || buttonThatWasClicked == fullscreenDeactivateButton.get()) {
         bool newFullscreenStatus = !extension->extensionWindow->isFullScreen();
-        windowFullscreen = newFullscreenStatus;
+        
         #if JUCE_WINDOWS
             newFullscreenStatus = !(Desktop::getInstance().getKioskModeComponent() == getTopLevelComponent());
             Desktop::getInstance().setKioskModeComponent(newFullscreenStatus ? getTopLevelComponent() : nullptr, false);
@@ -1452,7 +1452,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         #else
             extension->extensionWindow->setFullScreen(newFullscreenStatus);
         #endif
-
+        windowFullscreen = newFullscreenStatus;
         fullscreenActivateButton->setVisible(!newFullscreenStatus);
         fullscreenDeactivateButton->setVisible(newFullscreenStatus);
         /*
@@ -2101,9 +2101,20 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     } else {
                         extension->chordProLines[i]->getProperties().set("type", "chordAndLyrics"); 
                         // Minor cleanup for chords & lyrics
-                        line = std::regex_replace(line.toStdString(), std::regex("\\  +"), " ");
-                        line = std::regex_replace(line.toStdString(), std::regex("(\\]\\s)(?!\\s\\[)"), "]");
-                        
+                        line = std::regex_replace(line.toStdString(), std::regex("\\  +"), " "); //  Remove multiple spaces
+                        //line = std::regex_replace(line.toStdString(), std::regex("(\\]\\s)(?!\\s\\[)"), "]"); // Remove space after chord
+                        StringArray parts = StringArray::fromTokens(line," ","");
+                        String newLine;
+                        parts.removeEmptyStrings(true);
+                        for (int j = 0; j < parts.size(); ++j) {
+                            if (parts[j].substring(0,1) == "[" && parts[j].substring(parts[j].length()-1,parts[j].length()) == "]") {
+                                 // Remove space after chord but only if a space precedes the chord
+                                newLine += parts[j];
+                            } else {
+                                newLine += (parts[j] + " ");
+                            }
+                        }
+                        line = newLine;
                     }
                 } else if (line.trim() != "" && !gridLine && !tabLine){
                     extension->chordProLines[i]->getProperties().set("type", "lyricOnly"); 
