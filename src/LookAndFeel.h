@@ -621,6 +621,7 @@ public:
     //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
     Font font (Font (label.getHeight() * 2.0f, Font::plain));
+   
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
@@ -630,7 +631,8 @@ public:
     text = text.replace(" ","");
 
     // Background
-    int textWidth = (int) (font.getStringWidthFloat(" ") * gridLength * gridBars);
+    Font fontSpacer = font;
+    int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
     auto textHeight = (int) font.getHeight();
     g.setColour (Colours::grey.withAlpha(0.08f));
     g.fillRect( leftPad, 0, textWidth +  (int)(label.getHeight() * 0.16), textHeight);
@@ -686,7 +688,7 @@ public:
         attrString.setColour( chordProLyricColor.withAlpha(0.6f));
 
         if (runningTextWidth > 0) {
-          runningTextWidth = (int)(font2.getStringWidthFloat(" ") * gridLength * barCount);
+          runningTextWidth = (int)(fontSpacer.getStringWidthFloat(" ") * gridLength * barCount);
           if (nextCharacter == "|") runningTextWidth = runningTextWidth - (int)(label.getHeight() * 0.16); // Last bar adjustment
           barCount++;
         }
