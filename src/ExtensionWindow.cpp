@@ -19,6 +19,7 @@ int chordProTopPadding = CP_TOP_PADDING;
 bool chordProMonospaceFont = false;
 bool chordProSmallChordFont = false;
 bool chordProLeftLabels = false;
+bool chordProDarkMode = false;
 bool lockToSetlistMode = false;
 bool displayVariationsForSong = false;
 extern std::string extensionPath;
@@ -897,7 +898,7 @@ void ExtensionWindow::setImmediateSwitching(bool immediateSwitch) {
 
 void ExtensionWindow::setDarkMode(bool darkMode) {
     extension->preferences->setProperty("DarkMode", darkMode); 
-    extension->chordProDarkMode = darkMode;
+    chordProDarkMode = darkMode;
     //extension->chordProRefresh();
     //extension->repaint();
 }
@@ -984,7 +985,7 @@ void ExtensionWindow::toggleLeftMarginLabels() {
 void ExtensionWindow::toggleDarkMode() {
     bool status = extension->preferences->getProperty("DarkMode");
     extension->preferences->setProperty("DarkMode", !status); 
-    extension->chordProDarkMode = !status;
+    chordProDarkMode = !status;
     extension->chordProRefresh();
     extension->repaint();
 }
@@ -1961,7 +1962,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                             String pathDarkMode;
                             Image image;
                             bool createDarkMode = false;
-                            if (extension->chordProDarkMode) {
+                            if (chordProDarkMode) {
                                 pathDarkMode = file.getFileNameWithoutExtension() + CP_DARK_MODE_FILE_SUFFIX + file.getFileExtension();
                                 fileDarkMode = file.getParentDirectory().getChildFile(pathDarkMode);
                                 image = ImageFileFormat::loadFrom(fileDarkMode);
@@ -2070,6 +2071,12 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     }
                     extension->chordProLines[i]->getProperties().set("gridBars", parts.size());
                     //extension->log("Grid bars: " + std::to_string(parts.size()));
+                    // Other processing to ensure contents are space separated
+                    line = line.replace("|"," | ").replace("."," . ").replace("/"," / ");
+                    line = line.replace("|  |","||").replace("| :","|:").replace(": |",":|");
+                    //line = std::regex_replace(line.toStdString(), std::regex("\\|(?=[A-G])"),"| ");
+                    //line = std::regex_replace(line.toStdString(), std::regex("\\(?<!\\|)\\|")," |");
+                    
                 } else if (chorusLine) {
                     extension->chordProLines[i]->getProperties().set("section", "chorus"); 
                     //if (chorusLineFirst) extension->chordProLines[i]->getProperties().set("sectionLabel", chorusLabel);

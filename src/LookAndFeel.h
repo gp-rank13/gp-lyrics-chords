@@ -12,6 +12,7 @@ extern bool chordProMonospaceFont;
 extern float chordProFontSize;
 extern bool chordProSmallChordFont;
 extern bool chordProLeftLabels;
+extern bool chordProDarkMode;
 //extern Colour headerRackspaceColor;
 extern Colour headerSongColor;
 
@@ -436,6 +437,9 @@ public:
 
     Font font (Font (label.getHeight(), Font::plain));
     Font chordFont (Font (label.getHeight(), Font::plain));
+    Font labelFont = font.italicised();
+    Font monoFont = font;
+    monoFont.setTypefaceName(Font::getDefaultMonospacedFontName());
 
     if (chordProMonospaceFont) {
       font.setTypefaceName(Font::getDefaultMonospacedFontName());
@@ -446,6 +450,7 @@ public:
     }
     if (label.getProperties()["type"] == "chordAndLyrics") {
       font = font.withHeight(label.getHeight() * 0.5f);
+      labelFont = labelFont.withHeight(label.getHeight() * 0.5f);
       if (chordProSmallChordFont) {
         chordFont = chordFont.withHeight(label.getHeight() * 0.4f).boldened();
       } else {
@@ -459,7 +464,7 @@ public:
     
     if (chordProLeftLabels) {
       String sectionLabel = label.getProperties()["sectionLabel"];
-      g.setFont (font.italicised());
+      g.setFont (labelFont);
       g.setColour (chordProLyricColor.withAlpha(0.8f));
       g.drawFittedText ( sectionLabel,
             0, 0, (int)(leftPad - (50 * chordProFontSize)), label.getHeight(),
@@ -488,14 +493,27 @@ public:
             lastWordPosition = lastChordPosition;
           } 
           //int yPad = chordProSmallChordFont ? 0.1 : 0.025;
+          /*
+          if (chord.contains("b")) {
+            int pos = chord.indexOf("b");
+            double drawPos = lastWordPosition + chordFont.getStringWidthFloat(chord.substring(0,pos));
+            if (!chordProMonospaceFont) drawPos *= 0.97f;
+            g.setFont(monoFont.withHeight(label.getHeight() * 0.6));
+            g.drawFittedText (juce::String::charToString(0x266D),
+              drawPos + leftPad, 0, label.getWidth(), label.getHeight() / 2,
+              Justification::centredLeft, 1, 1.0f);
+            chord = chord.replace("b"," ");
+            g.setFont(chordFont);
+          }
+          */
           if (chordProSmallChordFont && label.getProperties()["type"] == "chordAndLyrics") {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.05, label.getWidth(), label.getHeight() / 2,
-            Justification::centredLeft, 2, 1.0f);
+            Justification::centredLeft, 1, 1.0f);
           } else {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.025, label.getWidth(), label.getHeight() / 2,
-            Justification::topLeft, 2, 1.0f);
+            Justification::topLeft, 1, 1.0f);
           }
           lastChordPosition = lastWordPosition + font.getStringWidthFloat(wordParts[j]);// + (label.getHeight() / 4);
           if (label.getProperties()["type"] == "chordAndLyrics") {
@@ -510,7 +528,7 @@ public:
           g.setFont (font);
           g.drawFittedText ( wordParts[j],
             lastWordPosition + leftPad, 0, label.getWidth(), label.getHeight(),
-            Justification::bottomLeft, 2, 1.0f);
+            Justification::bottomLeft, 1, 1.0f);
           chord = "";
           priorPartIsChord = false;
           lastWordPosition += font.getStringWidthFloat(wordParts[j]);
@@ -598,7 +616,7 @@ public:
     g.setFont (font);
     auto textWidth = (int) font.getStringWidthFloat(label.getText());
     auto textHeight = (int) font.getHeight();
-    g.setColour (Colours::grey.withAlpha(0.08f));
+    g.setColour (chordProDarkMode ? Colours::white.withAlpha(0.08f) : Colours::grey.withAlpha(0.08f));
     g.fillRect( leftPad, 0, textWidth, textHeight);
     String text = label.getText().toStdString();
     int runningTextWidth = 0;
@@ -620,22 +638,22 @@ public:
   void drawLabel (Graphics& g, Label& label) {
     //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
-    Font font (Font (label.getHeight() * 2.0f, Font::plain));
+    Font font (Font (label.getHeight() * 1.0f, Font::plain));
    
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
     int gridBars = label.getProperties()["gridBars"];
-    String text = label.getText().toStdString();
+    //String text = label.getText().toStdString();
     //text = text.replace("|  ", "| ").trimEnd();
-    text = text.replace(" ","");
-
+    //text = text.replace(" ","");
+    gridLength =  gridLength + 4;
     // Background
     Font fontSpacer = font;
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
     auto textHeight = (int) font.getHeight();
-    g.setColour (Colours::grey.withAlpha(0.08f));
-    g.fillRect( leftPad, 0, textWidth +  (int)(label.getHeight() * 0.16), textHeight);
+    g.setColour (chordProDarkMode ? Colours::white.withAlpha(0.08f) : Colours::grey.withAlpha(0.08f));
+    g.fillRect( leftPad, 0, textWidth + (int)(label.getHeight() * 0.16), textHeight);
     //font = font.withHeight(label.getHeight());
 
     // Post Comments
@@ -646,76 +664,61 @@ public:
           leftPad + textWidth + label.getHeight(), 0, label.getWidth() - textWidth - leftPad, label.getHeight(),
           Justification::centredLeft, 1, 1.0f);
 
-    // Bars
+    // Bars and Chords
     int runningTextWidth = 0;
     int barCount = 1;
-    for (int i = 0; i < text.length(); i++) {
-      String character = text.substring(i, i+1);
-      String nextCharacter = text.substring(i+1, i+2);
+    StringArray parts = StringArray::fromTokens(label.getText(),false);
+    parts.removeEmptyStrings();
+    for (int i = 0; i < parts.size(); ++i) { 
       g.setColour (chordProLyricColor.withAlpha(0.8f));
-      character = character.replace(".","   ");
-      //runningTextWidth = (int) font.getStringWidthFloat(text.substring(0, i));
-      /*
-      if (character == "-" || character == "|") {
-        g.setColour (chordProLyricColor.withAlpha(0.3f));
-      }
-      */
-      if (character == "|") {
-        juce::AttributedString attrString;
-        if ( nextCharacter == "|") {
-          //attrString.setText( L"𝄁" );
-          attrString.setText(juce::String::charToString(0x1D101));
-          text = text.replaceSection(i + 1, 1, "");
-        } else {
-          //attrString.setText( L"𝄀" );
-          attrString.setText(juce::String::charToString(0x1D100));
+      juce::AttributedString barCharacter;
+      juce::String partCharacter = parts[i];
+      int characterLength = partCharacter.length();
+      if (partCharacter == "|" || partCharacter == "||" || partCharacter == "|:" || partCharacter == ":|") {
+        // Draw bar characters
+        if (partCharacter == "|") {
+          barCharacter.setText(juce::String::charToString(0x1D100));
+        } else if (partCharacter == "||") {
+          barCharacter.setText(juce::String::charToString(0x1D101));
+        } else if (partCharacter == "|:") {
+          barCharacter.setText(juce::String::charToString(0x1D106));
+        } else if (partCharacter == ":|") {
+          barCharacter.setText(juce::String::charToString(0x1D107));
         }
-        //character = "𝄁";
-        //auto newCharacter(juce::AttributedString("𝄁"));
-         // I know - don't embed actual Unicode chars in source code*.
-        //runningTextWidth += (int) font.getStringWidthFloat(character);
-        Font font2 (Font (label.getHeight() * 2.0f, Font::plain));
-        font2.setTypefaceName(Font::getDefaultMonospacedFontName());
+        characterLength = 1;
+        Font barFont (Font (label.getHeight() * 1.4f, Font::plain));
+        barFont.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
-           //font2.setTypefaceName("Sergoe UI Symbol");
-           font2.setTypefaceName("Lucida Sans Unicode");
+           barFont.setTypefaceName("Lucida Sans Unicode");
         #endif
-
-
-        attrString.setFont( font2 );
-        attrString.setJustification( juce::Justification::centredLeft );
-        //attrString.setWordWrap( juce::AttributedString::WordWrap::none );
-        attrString.setColour( chordProLyricColor.withAlpha(0.6f));
-
+        barCharacter.setFont( barFont );
+        barCharacter.setJustification( juce::Justification::centredLeft );
+        barCharacter.setColour( chordProLyricColor.withAlpha(0.6f));
         if (runningTextWidth > 0) {
           runningTextWidth = (int)(fontSpacer.getStringWidthFloat(" ") * gridLength * barCount);
-          if (nextCharacter == "|") runningTextWidth = runningTextWidth - (int)(label.getHeight() * 0.16); // Last bar adjustment
+          if (partCharacter == "||") runningTextWidth = runningTextWidth - (int)(label.getHeight() * 0.12); // Last bar adjustment
+          if (partCharacter == ":|") runningTextWidth = runningTextWidth - (int)(label.getHeight() * 0.4); // Repeat end adjustment
           barCount++;
         }
-
-        attrString.draw( g, label.getLocalBounds().toFloat().withX(leftPad + runningTextWidth) );
-        ///font.setTypefaceName(Font::getDefaultSerifFontName());
-        //g.setFont (font);
-        //newCharacter.setFont(font);
-        //newCharacter.draw(g, label.getLocalBounds().toFloat());
+        barCharacter.draw( g, label.getLocalBounds().toFloat().withX(leftPad + runningTextWidth).withY((int)(label.getHeight() * 0.15)));
+        runningTextWidth += (int)fontSpacer.getStringWidthFloat(" ");
       } else {
-        //runningTextWidth += (int) font.getStringWidthFloat(character);
+        // Draw Chords
         font = font.withHeight(label.getHeight());
         g.setFont(font);
         g.setColour(chordProChordColor);
-        g.drawFittedText (character,
+        if (partCharacter == ".") partCharacter = " ";
+        g.drawFittedText (partCharacter,
           leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
           Justification::centredLeft, 1, 1.0f);
+        runningTextWidth += ((int)font.getStringWidthFloat(" ") * (characterLength + 1));
       }
-
-      runningTextWidth += (int)font.getStringWidthFloat(character);
     }
-
     // Section Label
     if (chordProLeftLabels) {
       String sectionLabel = label.getProperties()["sectionLabel"];
       g.setFont (commentFont.italicised());
-      g.setColour (chordProLyricColor.withAlpha(0.6f));
+      g.setColour (chordProLyricColor.withAlpha(0.8f));
       g.drawFittedText ( sectionLabel,
             0, 0, (int)(leftPad - (50 * chordProFontSize)), label.getHeight(),
             Justification::bottomRight, 1, 1.0f);

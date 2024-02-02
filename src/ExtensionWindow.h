@@ -366,7 +366,7 @@ public:
   bool chordProForCurrentSong = false;
   bool chordProImagesOnly = false;
   bool chordProTwoColumns = false;
-  bool chordProDarkMode = false;
+  //bool chordProDarkMode = false;
   bool fitHeight = false;
   bool prefsLoaded = false;
   bool pendingDisplayWindow = false;
