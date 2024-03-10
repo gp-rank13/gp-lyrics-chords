@@ -857,6 +857,9 @@ public:
       font.setTypefaceName(Font::getDefaultMonospacedFontName());
       y = button.getHeight() * (button.getName() == "transposeFlat" ? 0.05 : 0.08);
     }
+    #if JUCE_WINDOWS
+        font.setTypefaceName("Lucida Sans Unicode");
+    #endif
     g.setFont (font);
 		g.setColour (Colours::white);
     g.drawFittedText (button.getButtonText(),
