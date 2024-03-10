@@ -83,8 +83,12 @@ const juce::String CP_DARK_MODE_FILE_SUFFIX = "-DarkMode";
 const juce::String CP_NO_DARK_MODE_IMAGES = "No dark mode image(s)";
 const juce::String CP_DARK_MODE_IMAGE_PROCESSING = "Creating image(s)...";
 
-const std::vector<std::string> NOTES_SHARP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-const std::vector<std::string> NOTES_FLAT = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
+const juce::StringArray NOTES_SHARP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+const juce::StringArray NOTES_FLAT = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
+const std::vector<std::string> SHARPS = {"C#", "D#", "F#", "G#", "A#"};
+const std::vector<std::string> FLATS = {"Db", "Eb", "Gb", "Ab", "Bb"};
+const std::vector<std::string> SHARPS_FLATS = {"C#", "D#", "F#", "G#", "A#", "Db", "Eb", "Gb", "Ab", "Bb"};
+typedef enum FLAT_SHARP_DISPLAY {original, flat, sharp} FLAT_SHARP_DISPLAY;
 
 // Timer callback defaults
 const int TIMER_CLOCK = 5000;

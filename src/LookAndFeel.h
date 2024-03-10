@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Constants.h"
+//#include "ChordPro.h"
 
 using namespace juce;
 
@@ -13,6 +14,9 @@ extern float chordProFontSize;
 extern bool chordProSmallChordFont;
 extern bool chordProLeftLabels;
 extern bool chordProDarkMode;
+extern int chordProTranspose;
+extern FLAT_SHARP_DISPLAY chordProTransposeDisplay;
+extern bool searchCaratOn;
 //extern Colour headerRackspaceColor;
 extern Colour headerSongColor;
 
@@ -164,6 +168,21 @@ class blankButtonLookAndFeel : public LookAndFeel_V4 {
 public:
 	void drawButtonText (Graphics&, TextButton&, bool, bool) {};
   void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool, bool) {};
+};
+
+class colorButtonLookAndFeel : public LookAndFeel_V4 {
+public:
+	void drawButtonText (Graphics&, TextButton&, bool, bool) {};
+  void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour& colour, bool isButtonHighlighted, bool isButtonDown) 
+  {
+     auto buttonArea = button.getLocalBounds().toFloat();
+     g.setColour(colour);
+     g.fillRect(buttonArea);
+     if (isButtonHighlighted | isButtonDown) {
+      g.setColour(Colours::white);
+      g.drawRect(buttonArea);
+     }
+  };
 };
 
 class setlistButtonLookAndFeel : public LookAndFeel_V4 {
@@ -421,6 +440,37 @@ public:
   }
 };
 
+class searchBoxLookAndFeel : public LookAndFeel_V4 {
+public:
+  void drawLabel (Graphics& g, Label& label) {
+    Font font (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
+    g.setFont (font);
+    g.setColour (Colours::white);
+    auto bounds = label.getBounds().toFloat().withTrimmedTop(10.f).withTrimmedBottom(10.f);
+    //g.fillAll(Colours::white);
+    g.fillRoundedRectangle(0, 10, 310, label.getHeight() - 20, 15.0f);
+    if (label.getText() == "") {
+      g.setColour (Colours::grey);
+      g.setFont (Font (16.00f, Font::plain).withTypefaceStyle ("Regular").italicised());
+      g.drawFittedText ("RETURN selects the first search result.",
+          15, 0, label.getWidth(), label.getHeight (),
+          Justification::centredLeft, 1, 1.0f);
+    } else {
+      g.setColour (Colours::black);
+      g.drawFittedText (label.getText(),
+          15, 0, label.getWidth(), label.getHeight (),
+          Justification::centredLeft, 1, 1.0f);
+    }
+    
+    if (searchCaratOn) {
+      g.setFont(font);
+      g.setColour(Colours::black);
+      int textWidth = (int) font.getStringWidthFloat(label.getText());
+      g.drawRect(15 + textWidth, 14, 1, label.getHeight() - 28);
+    }
+  }
+};
+
 class chordPro : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
@@ -506,6 +556,64 @@ public:
             g.setFont(chordFont);
           }
           */
+         // Apply transpose and flat/sharp conversion
+        chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
+         if (chordProTranspose != 0) {
+          //chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
+          /*
+          // Split out bass note 
+          StringArray chordParts = StringArray::fromTokens(chord,"/","");
+        
+          for (int k = 0; k < chordParts.size(); ++k) {
+            String root;
+            int newIndex = -1;
+            if (chordParts[k].contains("#")) {
+              root = chordParts[k].substring(0,2);
+              newIndex = NOTES_SHARP.indexOf(root) + chordProTranspose;
+              if (newIndex < 0) {
+                newIndex += (NOTES_SHARP.size());
+              } else if (newIndex > NOTES_SHARP.size() - 1) {
+                newIndex -= NOTES_SHARP.size();
+              }
+              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_SHARP[newIndex]));
+            } else if (chordParts[k].contains("b")) {
+              root = chordParts[k].substring(0,2);
+              newIndex = NOTES_FLAT.indexOf(root) + chordProTranspose;
+              if (newIndex < 0) {
+                newIndex += (NOTES_FLAT.size());
+              } else if (newIndex > NOTES_FLAT.size() - 1) {
+                newIndex -= NOTES_FLAT.size();
+              }
+              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_FLAT[newIndex]));
+            } else {
+              root = chordParts[k].substring(0,1);
+              newIndex = NOTES_SHARP.indexOf(root) + chordProTranspose;
+              if (newIndex < 0) {
+                newIndex += (NOTES_SHARP.size());
+              } else if (newIndex > NOTES_SHARP.size() - 1) {
+                newIndex -= NOTES_SHARP.size();
+              }
+              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_SHARP[newIndex]));
+            }
+          }
+          chord = chordParts.joinIntoString("/");
+          */
+          /*
+          for (int k = 0; k < SHARPS_FLATS.size(); ++k) {
+            if (chordParts[0].startsWith(SHARPS_FLATS[k])) {
+              // Calculate new index
+              newIndex = k + chordProTranspose;
+              if (newIndex < 0) {
+                newIndex += (NOTES_SHARP.size());
+              } else if (newIndex > NOTES_SHARP.size() - 1) {
+                newIndex -= NOTES_SHARP.size();
+              }
+            }
+          } 
+          if (newIndex != -1) chord = NOTES_SHARP[newIndex];
+          */
+         }
+        
           if (chordProSmallChordFont && label.getProperties()["type"] == "chordAndLyrics") {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.05, label.getWidth(), label.getHeight() / 2,
@@ -515,14 +623,14 @@ public:
             lastWordPosition + leftPad, label.getHeight() * 0.025, label.getWidth(), label.getHeight() / 2,
             Justification::topLeft, 1, 1.0f);
           }
-          lastChordPosition = lastWordPosition + font.getStringWidthFloat(wordParts[j]);// + (label.getHeight() / 4);
+          lastChordPosition = lastWordPosition + font.getStringWidthFloat(chord);// + (label.getHeight() / 4);
           if (label.getProperties()["type"] == "chordAndLyrics") {
             lastChordPosition = lastChordPosition + font.getStringWidthFloat(" "); // Force minimum gap
           } else if (label.getProperties()["type"] == "chordOnly") {
             lastChordPosition = lastChordPosition + font.getStringWidthFloat("  ");  // Minimum gap for chord only lines
           }
           
-          lastPosition += font.getStringWidthFloat(wordParts[j]);
+          lastPosition += font.getStringWidthFloat(chord);
         } else {
           g.setColour (chordProLyricColor);
           g.setFont (font);
@@ -707,7 +815,11 @@ public:
         font = font.withHeight(label.getHeight());
         g.setFont(font);
         g.setColour(chordProChordColor);
-        if (partCharacter == ".") partCharacter = " ";
+        if (partCharacter == ".") {
+          partCharacter = " ";
+        } else {
+          partCharacter = ChordPro::CP_Transpose(partCharacter, chordProTranspose, chordProTransposeDisplay);
+        }
         g.drawFittedText (partCharacter,
           leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
           Justification::centredLeft, 1, 1.0f);
@@ -732,12 +844,23 @@ public:
 		//bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
     bool, bool)
 	{
-		Font font (button.getHeight() * ((button.getName() == "Mono" || button.getName() == "Create") ? 0.5 : 0.9));
+    int y = 0;
+    int fontHeight = button.getHeight() * 0.9;
+    if (button.getName() == "Mono" || button.getName() == "Create") {
+      fontHeight = button.getHeight() * 0.5;
+    } else if (button.getName() == "transposeSharp") {
+      fontHeight = button.getHeight() * 0.75;
+    }
+		Font font (fontHeight);
     auto height = ((button.getName() == "Mono" || button.getName() == "Create") ? button.getHeight() : button.getHeight() * 0.85);
-		g.setFont (font);
+		if (button.getName() == "transposeFlat" || button.getName() == "transposeSharp") {
+      font.setTypefaceName(Font::getDefaultMonospacedFontName());
+      y = button.getHeight() * (button.getName() == "transposeFlat" ? 0.05 : 0.08);
+    }
+    g.setFont (font);
 		g.setColour (Colours::white);
     g.drawFittedText (button.getButtonText(),
-				0, 0, button.getWidth(), height,
+				0, y, button.getWidth(), height,
 				Justification::centred, 1, 1.0f);
     }
 
@@ -753,7 +876,7 @@ public:
     } else if (isButtonDown) {
       g.setColour (Colour(0xff9a9a9a));
     } else {
-      g.setColour (Colour(0xff2f2f2f));
+      g.setColour (Colours::darkgrey.withLightness(0.15f));//Colour(0xff2f2f2f));
     }   
     g.fillRoundedRectangle (buttonArea, cornerSize);
     g.setColour(Colours::white.withAlpha(0.1f));
@@ -766,7 +889,7 @@ public:
 	void drawLabel (Graphics& g, Label& label) {
 		//const int yIndent = label.proportionOfHeight (0.2f);
 		const int textWidth = label.getWidth();
-    g.setFont (Font (25.00f, Font::plain).withTypefaceStyle ("Regular"));
+    g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
     g.setColour (chordProLyricColor.withMultipliedBrightness(0.8f));
     g.drawFittedText (label.getText(),
       15, 0, textWidth, label.getHeight(),

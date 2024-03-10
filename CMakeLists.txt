@@ -25,6 +25,8 @@ target_sources(
           "${CMAKE_CURRENT_LIST_DIR}/src/LibMain.h"
           "${CMAKE_CURRENT_LIST_DIR}/src/ExtensionWindow.cpp"
           "${CMAKE_CURRENT_LIST_DIR}/src/ExtensionWindow.h"
+          "${CMAKE_CURRENT_LIST_DIR}/src/ChordPro.cpp"
+          "${CMAKE_CURRENT_LIST_DIR}/src/ChordPro.h"
           "${CMAKE_CURRENT_LIST_DIR}/src/LookAndFeel.h"
           "${CMAKE_CURRENT_LIST_DIR}/src/IconPaths.h"
           "${CMAKE_CURRENT_LIST_DIR}/src/Constants.h"
@@ -32,7 +34,7 @@ target_sources(
           "${CMAKE_CURRENT_LIST_DIR}/src/Panels.h"
           )
 target_link_libraries(
-  ${PROJECT_NAME} PRIVATE gigperformer::sdk::cpp juce::juce_gui_basics
+  ${PROJECT_NAME} PRIVATE gigperformer::sdk::cpp juce::juce_gui_basics juce::juce_gui_extra
                           juce::juce_core juce::juce_events juce::juce_graphics)
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

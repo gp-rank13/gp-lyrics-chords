@@ -58,7 +58,7 @@ void LibMain::InvokeMenu(int index)
                 */
                   case 1:
                     ExtensionWindow::displayWindow(true);
-                    ExtensionWindow::displayPreferences();
+                    ExtensionWindow::displayPreferencesContainer(true);
                     break;
                   default:
                      break;   
@@ -280,12 +280,17 @@ void LibMain::OnSongPartChanged(int oldIndex, int newIndex) {
 void LibMain::OnSetlistChanged(const std::string&) {
     if (isGigFileLoading) return;
     if (inSetlistMode()) {
+        int songIndex = getCurrentSongIndex();
         ExtensionWindow::updateSetlistButtons(getSetlistNames());
         ExtensionWindow::updateButtonNames(getSongNames());
-        ExtensionWindow::selectButton(getCurrentSongIndex());
+        //ExtensionWindow::selectButton(getCurrentSongIndex());
         ExtensionWindow::selectSetlistButton(getCurrentSetlistIndex());
-        ExtensionWindow::chordProReadFile(getCurrentSongIndex());
-
+        ExtensionWindow::chordProReadFile(songIndex);
+        if (!ExtensionWindow::isButtonSelected(songIndex)) { // If selected in GP directly, ensure buttons are in sync
+            ExtensionWindow::selectButton(songIndex);
+            ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(songIndex) : getSongPartNames(songIndex));
+            ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
+        }
     }
 }
 

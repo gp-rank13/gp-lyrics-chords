@@ -15,6 +15,12 @@ public:
     void timerCallback() override;
 };
 
+class CaratTimer : public Timer
+{
+public:
+    void timerCallback() override;
+};
+
 class CreateImageTimer : public Timer
 {
 public:

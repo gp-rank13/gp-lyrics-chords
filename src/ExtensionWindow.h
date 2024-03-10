@@ -5,7 +5,9 @@
 #include <juce_core/juce_core.h>
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 #include "Constants.h"
+#include "ChordPro.h"
 #include "LookAndFeel.h"
 #include "Timer.h"
 #include <regex>
@@ -53,6 +55,7 @@ class PopOver : public Component
 public:
   void paint(Graphics& g) override {
     auto brightness = (viewPortBackground.getBrightness() == 0.0) ? viewPortBackground.getBrightness() + 0.2 :  viewPortBackground.getBrightness() - 0.2;
+    if (viewPortBackground == Colour::fromString(CP_DARK_IMAGES_BACKGROUND_COLOR)) brightness = 0.2;
     g.fillAll (viewPortBackground.withBrightness(brightness).withAlpha(0.9f));
   } 
 };
@@ -69,6 +72,15 @@ class SetlistContainer : public Component
 public:
   void paint(Graphics& g) override {
     g.fillAll (Colour (0xFF1A1A1A));
+  } ;
+
+};
+
+class SetlistHeaderContainer : public Component
+{
+public:
+  void paint(Graphics& g) override {
+     g.fillAll (Colour::fromString(BACKGROUND_COLOR));
   } ;
 
 };
@@ -183,6 +195,80 @@ public:
 
 };
 
+class FloatingViewPort : public Viewport
+{
+public:
+  void paint(Graphics& g) override {
+    g.fillAll (Colour::fromString(BACKGROUND_COLOR));
+  } ;
+};
+
+class IconButton : public ShapeButton
+{
+public:
+IconButton() :
+  juce::ShapeButton("", Colours::white, Colours::lightgrey, Colours::white )
+  {
+   setWantsKeyboardFocus(false);
+  }
+  virtual ~IconButton() { }
+};
+
+class ColourChangeButton  : public TextButton,
+                            public ChangeListener,
+                            private Value::Listener
+{
+public:
+    ColourChangeButton (const String& name = String())
+        : TextButton (name)
+    {
+        colourValue.addListener (this);
+        updateColour();
+    }
+
+    Value& getColourValueObject()
+    {
+        return colourValue;
+    }
+
+    void clicked() override
+    {
+      auto  colourSelector = std::make_unique<ColourSelector>(
+                    ColourSelector::showColourspace
+                    | ColourSelector::showColourAtTop
+                    | ColourSelector::editableColour
+                    );
+      colourSelector->setName("ColorSelector");
+      colourSelector->setCurrentColour( findColour (TextButton::buttonColourId) );
+      colourSelector->addChangeListener(this); 
+      colourSelector->setColour(ColourSelector::backgroundColourId, Colours::black);
+      colourSelector->setSize(200, 200);
+      juce::CallOutBox::launchAsynchronously(std::move(colourSelector), getScreenBounds(),nullptr);
+    }
+
+    void changeListenerCallback (ChangeBroadcaster* source) override;
+    //void focusLost (FocusChangeType cause) override;
+    /*
+    {
+        if (ColourSelector* cs = dynamic_cast<ColourSelector*> (source))
+            colourValue = cs->getCurrentColour().toString();
+    }
+    */
+
+private:
+    Value colourValue;
+
+    void valueChanged (Value&) override
+    {
+        updateColour();
+    }
+
+    void updateColour()
+    {
+        setColour (TextButton::buttonColourId, Colour::fromString (colourValue.toString()));
+    }
+};
+
 class MyDocumentWindow : public DocumentWindow
 {
   public:
@@ -194,10 +280,13 @@ class MyDocumentWindow : public DocumentWindow
   virtual ~MyDocumentWindow() { }
   virtual void closeButtonPressed () override;
   virtual void moved () override;
+  virtual bool keyPressed(const KeyPress& key) override;
+
 };
 
 class ExtensionWindow  :  public juce::Component,
-                          public juce::Button::Listener                 
+                          public juce::Button::Listener,
+                          public juce::ChangeListener   
 {
 public:
   ExtensionWindow ();
@@ -244,6 +333,7 @@ public:
   void static chordProSetFontSize(float newSize);
   void static chordProSetLeftMarginLabels(bool onLeft);
   void static chordProSetSmallChordFont(bool isSmall);
+  void static chordProSetTranspose(int transpose);
   void static updateViewportPositionForSubButtons();
   void static toggleZeroBasedNumbering();
   void static toggleImmediateSwitching();
@@ -272,13 +362,38 @@ public:
   void static setSongLabel();
   void static displayFontContainer(bool display);
   void static displaySetlistContainer(bool display);
-  void static displayPreferences();
+  void static displayTransposeContainer(bool display);
+  void static displaySearchContainer(bool display);
+  void static displayPreferencesContainer(bool display);
+  void static logToGP(std::string text);
+  void static songSearch(String searchCharacter, bool append);
+  void static songSearchBackspace();
+  void static songSearchSelect();
+  void static clearSearch();
+  void static displaySearchCarat(); 
+  //void static exitSearch();
+  //void static displaySearch(bool display);
+  bool static isActiveSearch();
+  void static filterButtons(String text);
 
   Image static getWindowIcon();
   void mouseDrag ( const MouseEvent& /*e*/) override
     {
         resized();
     }
+  
+  void changeListenerCallback (ChangeBroadcaster* source) override
+    {
+        //if (juce::ColourSelector* cs = dynamic_cast<juce::ColourSelector*> (source))
+        //    colourValue = cs->getCurrentColour().toString();
+      if (ColourSelector* cs = dynamic_cast <ColourSelector*> (source))
+      {
+          const String& name = cs->getName();
+          logToGP(name.toStdString());
+          
+      }
+    }
+  
   void static chordProScrollWindow(double value);
   void static chordProUp();
   void static chordProDown();
@@ -307,6 +422,8 @@ public:
   SharedResourcePointer<minimalistSong> minimalistSongLnF;
   SharedResourcePointer<subButtonHighlightLookAndFeel> highlightLnF;
   SharedResourcePointer<blankButtonLookAndFeel> blankLnF;
+  SharedResourcePointer<searchBoxLookAndFeel> searchBoxLnF;
+  SharedResourcePointer<colorButtonLookAndFeel> colorButtonLnF;
   SharedResourcePointer<chordPro> chordProLnF;
   SharedResourcePointer<chordProTitle> chordProTitleLnF;
   SharedResourcePointer<chordProSubTitle> chordProSubTitleLnF;
@@ -326,12 +443,14 @@ public:
 
   void chordProRefresh();
   void chordProReset();
+  void colorSelectorHelper(juce::StringRef name, juce::Colour currentColor, Rectangle<int> bounds);
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
   void static setWindowState();
   Rectangle<int> static getWindowPositionAndSize();
   void static setSongPanelPosition(bool display);
+  void static setSongPanelToFloating(bool isFloating);
   void updatePreferencesWindow();
   void updatePreferencesColors();
 
@@ -344,21 +463,27 @@ public:
   PreferencesContainer preferencesContainer;
   ChordProContainer chordProContainer;
   SetlistContainer setlistContainer;
+  SetlistHeaderContainer setlistHeaderContainer;
   std::unique_ptr<DrawableButton> prefToggle;
+  FloatingViewPort floatingViewport;
 
   PopOver fontButtonContainer;
   PopOver missingImageContainer;
+  PopOver transposeContainer;
+  PopOver searchContainer;
   OwnedArray<TextButton> buttons;
   OwnedArray<TextButton> subButtons;
   OwnedArray<TextButton> setlistButtons;
   OwnedArray<Label> chordProLines;
   OwnedArray<ImageComponent> chordProImages;
   OwnedArray<DrawableButton> prefButtons;
-  OwnedArray<Label> prefColorLabels;
+  //OwnedArray<Label> prefColorLabels;
+  OwnedArray<ColourChangeButton> prefColorButtons;
   StringPairArray buttonColors;
   StringPairArray chordProColors;
   ClockTimer clockTimer;
   RefreshTimer refreshTimer;
+  CaratTimer caratTimer;
   CreateImageTimer imageTimer;
   bool displayRightPanel = true;
   bool displaySongPanel = true;
@@ -374,13 +499,17 @@ public:
   bool windowFullscreen = false;
   std::unique_ptr<int> switchImmediately;
   int prevButtonSelected = 0;
+  String searchText;
   std::unique_ptr<Label> highlight;
   std::unique_ptr<Label> header;
   std::unique_ptr<Label> clock;
   std::unique_ptr<Label> fontPopOverLabel;
   std::unique_ptr<Label> missingImageLabel;
+  std::unique_ptr<Label> transposeLabel;
+  std::unique_ptr<Label> searchLabel;
   std::unique_ptr<Label> noSongsLabel;
   std::unique_ptr<Label> noChordProLabel;
+  std::unique_ptr<Label> searchBox;
   std::unique_ptr<TextButton> btnCurrent;
   std::unique_ptr<TextButton> btnPrev;
   std::unique_ptr<TextButton> btnNext;
@@ -388,27 +517,33 @@ public:
   std::unique_ptr<TextButton> fontUp;
   std::unique_ptr<TextButton> fontDown;
   std::unique_ptr<TextButton> fontMono;
+  std::unique_ptr<TextButton> transposeUp;
+  std::unique_ptr<TextButton> transposeDown;
+  std::unique_ptr<TextButton> transposeSharp;
+  std::unique_ptr<TextButton> transposeFlat; 
   std::unique_ptr<TextButton> setlistButton;
   std::unique_ptr<TextButton> createInvertedImage;
+  //std::unique_ptr<ColourChangeButton> testButton;
   std::unique_ptr<DynamicObject> preferences;
   std::unique_ptr<DynamicObject> preferencesChordProColors;
-  std::unique_ptr<ShapeButton> sidePanelOpenButton;
-  std::unique_ptr<ShapeButton> sidePanelCloseButton;
-  std::unique_ptr<ShapeButton> pinUnpinnedButton;
-  std::unique_ptr<ShapeButton> pinPinnedButton;
-  std::unique_ptr<ShapeButton> fullscreenActivateButton;
-  std::unique_ptr<ShapeButton> fullscreenDeactivateButton;
-  std::unique_ptr<ShapeButton> fontButton;
-  std::unique_ptr<ShapeButton> lightDarkModeButton;
-  std::unique_ptr<ShapeButton> columnsTwoButton;
-  std::unique_ptr<ShapeButton> columnsOneButton;
-  std::unique_ptr<ShapeButton> fitWidthButton;
-  std::unique_ptr<ShapeButton> fitHeightButton;
-  std::unique_ptr<ShapeButton> closeButton;
-  std::unique_ptr<ShapeButton> preferencesButton;
+  std::unique_ptr<IconButton> sidePanelOpenButton;
+  std::unique_ptr<IconButton> sidePanelCloseButton;
+  std::unique_ptr<IconButton> pinUnpinnedButton;
+  std::unique_ptr<IconButton> pinPinnedButton;
+  std::unique_ptr<IconButton> fullscreenActivateButton;
+  std::unique_ptr<IconButton> fullscreenDeactivateButton;
+  std::unique_ptr<IconButton> fontButton;
+  std::unique_ptr<IconButton> lightDarkModeButton;
+  std::unique_ptr<IconButton> columnsTwoButton;
+  std::unique_ptr<IconButton> columnsOneButton;
+  std::unique_ptr<IconButton> fitWidthButton;
+  std::unique_ptr<IconButton> fitHeightButton;
+  std::unique_ptr<IconButton> closeButton;
+  std::unique_ptr<IconButton> preferencesButton;
+  std::unique_ptr<IconButton> transposeButton;
+  std::unique_ptr<IconButton> searchButton;
   Image menuIcon;
   ImageComponent menuIconComponent;
-
 
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExtensionWindow)
