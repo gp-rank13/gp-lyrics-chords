@@ -15,10 +15,10 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
     int labelHeight = getHeight() * 0.3;
     int keyboardHeight = getHeight() * 0.7;
     g.setFont(Font(labelHeight));
-    g.setColour(Colour(0xFFF0F0F0));
+    g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
 
     g.drawFittedText(chordLabel, bounds.withHeight(labelHeight), Justification::centredTop, 1, 1.0f);
-    g.setColour(Colour(0xFFD0D0D0));
+    g.setColour(darkMode ? Colour(0xFFD0D0D0) : Colour(0xFF1F1F1F));
     ///g.drawRect(bounds.withHeight(labelHeight));
     int pad = getHeight() * 0.05;
     int x = 0;
@@ -30,13 +30,13 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
     // White keys
     for (int i = 0; i < keyboard.size(); ++i) {
         int key = i % 12;
-        g.setColour(Colour(0xFFF0F0F0));
+        g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
         if (key == 1 || key == 3 || key == 6 || key == 8 || key == 10 ) { // Black
             x += blackToWhiteX;
         } else { // White
             g.drawRect(x, labelHeight, whiteWidth, keyboardHeight);
             if(keyboard[i]->ChordDiagramKey::keyOn) {
-                g.setColour(onColour.withAlpha(0.8f));
+                g.setColour(onColour);
                 g.fillRect(x + 1, labelHeight + 1, whiteWidth - 2, keyboardHeight - 2);
             }
             x += (key == 4 || key == 11 ? whiteWidth : whiteToBlackX);
@@ -50,7 +50,7 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
     for (int i = 0; i < keyboard.size(); ++i) {
         int key = i % 12;
         if (key == 1 || key == 3 || key == 6 || key == 8 || key == 10 ) { // Black
-            g.setColour(Colour(0xFFF0F0F0));
+            g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
             g.fillRect(x, labelHeight, blackWidth, keyboardHeight * 0.6);
             if(keyboard[i]->ChordDiagramKey::keyOn) {
                 g.setColour(onColour);
@@ -92,6 +92,11 @@ void ChordDiagramKeyboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISP
 
 void ChordDiagramKeyboard::updateKeyOnColour(Colour newColour) {
     onColour = newColour;
+}
+
+void ChordDiagramKeyboard::setDarkMode(bool isDarkMode) {
+    darkMode = isDarkMode;
+    repaint();
 }
 
 void ChordDiagramKeyboard::allNotesOff() {

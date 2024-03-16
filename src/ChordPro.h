@@ -25,6 +25,7 @@ public:
     String getChord();
     void updateChordDiagram(int transpose, FLAT_SHARP_DISPLAY accidental);
     void updateKeyOnColour(Colour newColour);
+    void setDarkMode(bool isDarkMode);
     void allNotesOff();
 
    
@@ -37,6 +38,7 @@ private:
     String chordLabel = "";
     StringArray chordNotes;
     Colour onColour = Colour(0xFFE5E5E5);
+    bool darkMode = false;
 };
 
 class ChordPro

@@ -1057,6 +1057,9 @@ void ExtensionWindow::setImmediateSwitching(bool immediateSwitch) {
 void ExtensionWindow::setDarkMode(bool darkMode) {
     extension->preferences->setProperty("DarkMode", darkMode); 
     chordProDarkMode = darkMode;
+    for (int i = 0; i < extension->chordProDiagramKeys.size(); ++i) {
+        extension->chordProDiagramKeys[i]->setDarkMode(darkMode);
+    }
     //extension->chordProRefresh();
     //extension->repaint();
 }
@@ -1144,6 +1147,9 @@ void ExtensionWindow::toggleDarkMode() {
     bool status = extension->preferences->getProperty("DarkMode");
     extension->preferences->setProperty("DarkMode", !status); 
     chordProDarkMode = !status;
+    for (int i = 0; i < extension->chordProDiagramKeys.size(); ++i) {
+        extension->chordProDiagramKeys[i]->setDarkMode(chordProDarkMode);
+    }
     extension->chordProRefresh();
     extension->repaint();
 }
