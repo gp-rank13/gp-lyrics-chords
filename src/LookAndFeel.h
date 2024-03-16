@@ -798,6 +798,7 @@ public:
         barFont.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
            barFont.setTypefaceName("Lucida Sans Unicode");
+           barFont.setHeight(label.getHeight() * 1.4f);
         #endif
         barCharacter.setFont( barFont );
         barCharacter.setJustification( juce::Justification::centredLeft );
@@ -855,11 +856,11 @@ public:
     auto height = ((button.getName() == "Mono" || button.getName() == "Create") ? button.getHeight() : button.getHeight() * 0.85);
 		if (button.getName() == "transposeFlat" || button.getName() == "transposeSharp") {
       font.setTypefaceName(Font::getDefaultMonospacedFontName());
+      #if JUCE_WINDOWS
+        font.setTypefaceName("Lucida Sans Unicode");
+      #endif
       y = button.getHeight() * (button.getName() == "transposeFlat" ? 0.05 : 0.08);
     }
-    #if JUCE_WINDOWS
-        font.setTypefaceName("Lucida Sans Unicode");
-    #endif
     g.setFont (font);
 		g.setColour (Colours::white);
     g.drawFittedText (button.getButtonText(),

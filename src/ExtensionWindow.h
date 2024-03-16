@@ -50,6 +50,34 @@ public:
   }
 };
 
+class ChordDiagramKeys : public Component
+{
+public:
+  String label = "Chord";
+  void paint(Graphics& g) override {
+      int newY = getHeight() / 3;
+      g.setFont(Font(newY));
+      g.setColour(Colour(0xFFF0F0F0));
+      auto bounds = getLocalBounds();
+      g.drawFittedText(label, bounds.withHeight(newY), Justification::centred, 1, 1.0f);
+      //g.setColour(Colours::red);
+      //g.fillRect(0, newY, getWidth(), getHeight() - newY);//.withTrimmedTop(getHeight() / 4));
+      //g.fillAll(Colours::red);
+      g.setColour(Colour(0xFFD0D0D0));
+      int w = getWidth() / 13;
+      int pad = getHeight() * 0.05;
+      for (int i = 0; i < 14; ++i) {
+        g.drawRect(i * (w - 1), newY + pad, w, getHeight() - newY - pad);
+      }
+        
+
+  }
+
+  void updateLabel(String newLabel) {
+    label = newLabel;
+  }
+};
+
 class PopOver : public Component
 {
 public:
@@ -405,6 +433,7 @@ public:
   //void chordProSetFontSize(float newSize);
   void chordProImagesCheckAndAdd(int index);
   int chordProGetVisibleImageCount();
+  int chordProDiagramKeysVisibleCount();
   void static chordProCreateInvertedImages();
   void static saveWindowState();
   void static savePreferences();
@@ -443,6 +472,7 @@ public:
 
   void chordProRefresh();
   void chordProReset();
+  void chordProUpdateDiagramColors();
   void colorSelectorHelper(juce::StringRef name, juce::Colour currentColor, Rectangle<int> bounds);
   String static getWindowState();
   String static getDefaults();
@@ -453,6 +483,7 @@ public:
   void static setSongPanelToFloating(bool isFloating);
   void updatePreferencesWindow();
   void updatePreferencesColors();
+
 
   std::unique_ptr<MyDocumentWindow> extensionWindow;
   TooltipWindow tooltipWindow;
@@ -479,6 +510,8 @@ public:
   OwnedArray<DrawableButton> prefButtons;
   //OwnedArray<Label> prefColorLabels;
   OwnedArray<ColourChangeButton> prefColorButtons;
+  //OwnedArray<ChordDiagramKeys> chordProDiagramKeys;
+  OwnedArray<ChordDiagramKeyboard> chordProDiagramKeys;
   StringPairArray buttonColors;
   StringPairArray chordProColors;
   ClockTimer clockTimer;
