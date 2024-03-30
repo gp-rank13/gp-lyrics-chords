@@ -1,3 +1,5 @@
+// Lyrics and Chords extension for Gig Performer by @rank13
+
 #include "ChordPro.h"
 #include <regex>
 
@@ -5,19 +7,19 @@ ChordDiagramKeyboard::ChordDiagramKeyboard ()
 {
     for (int i = 0; i < octaves; ++i) {
         for (int j = 0; j < 12; ++j) {
-            keyboard.add(new ChordDiagramKey());
+            keyboard.add(new ChordDiagramNote());
         }
     }
 }
 
 void ChordDiagramKeyboard::paint(Graphics& g) {
     auto bounds = getLocalBounds();
-    int labelHeight = getHeight() * 0.3;
-    int keyboardHeight = getHeight() * 0.7;
-    g.setFont(Font(labelHeight));
+    int labelHeight = getHeight() * 0.35;
+    int keyboardHeight = getHeight() * 0.65;
+    g.setFont(Font(labelHeight * 0.8f));
     g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
 
-    g.drawFittedText(chordLabel, bounds.withHeight(labelHeight), Justification::centredTop, 1, 1.0f);
+    g.drawFittedText(chordLabel, bounds.withHeight(labelHeight), Justification::centred, 1, 1.0f);
     g.setColour(darkMode ? Colour(0xFFD0D0D0) : Colour(0xFF1F1F1F));
     ///g.drawRect(bounds.withHeight(labelHeight));
     int pad = getHeight() * 0.05;
@@ -35,7 +37,7 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
             x += blackToWhiteX;
         } else { // White
             g.drawRect(x, labelHeight, whiteWidth, keyboardHeight);
-            if(keyboard[i]->ChordDiagramKey::keyOn) {
+            if(keyboard[i]->ChordDiagramNote::noteOn) {
                 g.setColour(onColour);
                 g.fillRect(x + 1, labelHeight + 1, whiteWidth - 2, keyboardHeight - 2);
             }
@@ -52,7 +54,7 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
         if (key == 1 || key == 3 || key == 6 || key == 8 || key == 10 ) { // Black
             g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
             g.fillRect(x, labelHeight, blackWidth, keyboardHeight * 0.6);
-            if(keyboard[i]->ChordDiagramKey::keyOn) {
+            if(keyboard[i]->ChordDiagramNote::noteOn) {
                 g.setColour(onColour);
                 g.fillRect(x + 1, labelHeight + 1, blackWidth - 2, keyboardHeight * 0.6 - 2);
             }
@@ -84,7 +86,7 @@ void ChordDiagramKeyboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISP
         } else if (keyIndex < 0) {
             keyIndex += keyboard.size();
         }
-        keyboard[keyIndex]->keyOn = true;
+        keyboard[keyIndex]->noteOn = true;
     }
     chordLabel = ChordPro::CP_Transpose(chord, transpose, accidental);
     repaint();
@@ -101,7 +103,89 @@ void ChordDiagramKeyboard::setDarkMode(bool isDarkMode) {
 
 void ChordDiagramKeyboard::allNotesOff() {
     for (int i = 0; i < keyboard.size(); ++i) {
-        keyboard[i]->keyOn = false;
+        keyboard[i]->noteOn = false;
+    }
+}
+
+ChordDiagramFretboard::ChordDiagramFretboard () 
+{
+    for (int i = 0; i < numberOfStrings; ++i) {
+        fretboard.add(new ChordDiagramNote());
+    }
+}
+
+void ChordDiagramFretboard::paint(Graphics& g) {
+    auto bounds = getLocalBounds();
+    int labelHeight = getHeight() * 0.25;
+    int fretboardHeight = getHeight() * 0.75;
+    int fretboardWidth = fretboardHeight;
+    int fretHeight = fretboardHeight / (numberOfFrets - 1);
+    int stringWidth = fretHeight;
+    g.setFont(Font(labelHeight));
+    g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
+
+    g.drawFittedText(chordLabel, bounds.withHeight(labelHeight), Justification::centredTop, 1, 1.0f);
+    //g.setColour(darkMode ? Colour(0xFFD0D0D0) : Colour(0xFF1F1F1F));
+    g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
+
+    g.drawRect(bounds);
+    int pad = getHeight() * 0.05;
+    int x = 0;
+
+
+    // Strings
+    for (int i = 0; i < numberOfStrings; ++i) {
+        g.fillRect(x, labelHeight, 1, fretHeight * (numberOfFrets - 1));
+        x += stringWidth;
+    }
+
+    // Frets
+    int y = labelHeight;
+    for (int i = 0; i < numberOfFrets; ++i) {
+        g.fillRect(0, y, stringWidth * (numberOfStrings - 1), 1);
+        y += fretHeight;
+    }
+}
+
+void ChordDiagramFretboard::updateChord(String newChord, StringArray newChordNotes) {
+    chord = newChord;
+    chordNotes.swapWith(newChordNotes);
+}
+
+String ChordDiagramFretboard::getChord() {
+    return chord;
+}
+
+void ChordDiagramFretboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISPLAY accidental = original) {
+    StringArray chordParts = StringArray::fromTokens(chord,"/","");
+    String root = ChordPro::CP_GetRootNote(chordParts[0]);
+    int rootIndex = ChordPro::CP_GetRootNoteIndex(root);
+    allNotesOff();
+    for (int i = 0; i < chordNotes.size(); ++i) {
+        int keyIndex = chordNotes[i].getIntValue() + rootIndex + transpose;
+        if (keyIndex >= fretboard.size()) {
+            keyIndex -= fretboard.size();
+        } else if (keyIndex < 0) {
+            keyIndex += fretboard.size();
+        }
+        fretboard[keyIndex]->noteOn = true;
+    }
+    chordLabel = ChordPro::CP_Transpose(chord, transpose, accidental);
+    repaint();
+}
+
+void ChordDiagramFretboard::updateKeyOnColour(Colour newColour) {
+    onColour = newColour;
+}
+
+void ChordDiagramFretboard::setDarkMode(bool isDarkMode) {
+    darkMode = isDarkMode;
+    repaint();
+}
+
+void ChordDiagramFretboard::allNotesOff() {
+    for (int i = 0; i < fretboard.size(); ++i) {
+        fretboard[i]->noteOn = false;
     }
 }
 

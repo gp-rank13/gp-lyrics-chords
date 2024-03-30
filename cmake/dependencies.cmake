@@ -22,7 +22,8 @@ FetchContent_Declare(
   gp-sdk
   GIT_REPOSITORY https://github.com/gigperformer/gp-sdk.git
   #GIT_TAG f24d56b3029e8f4b07fb7d00239abfb78c4ec4bc # v46
-  GIT_TAG 3a94a32c4112c5c674e81b4a8687fcef8a9b0c6d
+  #GIT_TAG 229d4195cc8ec75dd6eec0922ccc54bf094c0963 # GP 4.8.2
+  GIT_TAG 3a94a32c4112c5c674e81b4a8687fcef8a9b0c6d # Beta 4.8.15
 )
 fetch_dependency(gp-sdk)
 

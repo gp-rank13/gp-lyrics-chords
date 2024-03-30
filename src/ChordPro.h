@@ -11,9 +11,9 @@
 
 using namespace juce;
 
-struct ChordDiagramKey
+struct ChordDiagramNote
 {
-    bool keyOn = false;
+    bool noteOn = false;
 };
 
 class ChordDiagramKeyboard : public Component
@@ -28,12 +28,34 @@ public:
     void setDarkMode(bool isDarkMode);
     void allNotesOff();
 
-   
 private:
-    OwnedArray<ChordDiagramKey> keyboard;
+    OwnedArray<ChordDiagramNote> keyboard;
     int numberOfWhiteKeys = 7;
     int numberOfBlackKeys = 5;
     int octaves = 2;
+    String chord = "";
+    String chordLabel = "";
+    StringArray chordNotes;
+    Colour onColour = Colour(0xFFE5E5E5);
+    bool darkMode = false;
+};
+
+class ChordDiagramFretboard : public Component
+{
+public:
+    ChordDiagramFretboard ();
+    void paint(Graphics& g) override;
+    void updateChord(String newChord, StringArray newChordNotes);
+    String getChord();
+    void updateChordDiagram(int transpose, FLAT_SHARP_DISPLAY accidental);
+    void updateKeyOnColour(Colour newColour);
+    void setDarkMode(bool isDarkMode);
+    void allNotesOff();
+
+private:
+    OwnedArray<ChordDiagramNote> fretboard;
+    int numberOfFrets = 6;
+    int numberOfStrings = 6;
     String chord = "";
     String chordLabel = "";
     StringArray chordNotes;

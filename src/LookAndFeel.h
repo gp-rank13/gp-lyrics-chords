@@ -1,4 +1,4 @@
-// Rackspace and song selector extension for Gig Performer by @rank13
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 #pragma once
 
@@ -482,7 +482,7 @@ public:
     double lastChordPosition = 0.0;
     double lastPosition = 0.0;
     //double nextWordPosition = 0.0;
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     auto labelArea = label.getLocalBounds();
 
     Font font (Font (label.getHeight(), Font::plain));
@@ -517,7 +517,7 @@ public:
       g.setFont (labelFont);
       g.setColour (chordProLyricColor.withAlpha(0.8f));
       g.drawFittedText ( sectionLabel,
-            0, 0, (int)(leftPad - (50 * chordProFontSize)), label.getHeight(),
+            0, 0, (int)(leftPad - (CP_DEFAULT_LEFT_MARGIN * chordProFontSize)), label.getHeight(),
             Justification::bottomRight, 1, 1.0f);
     }
 
@@ -652,7 +652,7 @@ class chordProTitle : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
     //auto labelArea = label.getLocalBounds();
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     g.setFont (Font (label.getHeight() * 0.85f, Font::plain).withTypefaceStyle ("Regular")); //.boldened());
     g.setColour (chordProLyricColor);
     g.drawFittedText (label.getText(),
@@ -666,7 +666,7 @@ class chordProSubTitle : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
     //auto labelArea = label.getLocalBounds();
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     g.setFont (Font (label.getHeight(), Font::plain).withTypefaceStyle ("Regular").italicised());
     g.setColour (chordProLyricColor.withAlpha(0.8f));
     g.drawFittedText (label.getText(),
@@ -679,7 +679,7 @@ public:
 class chordProComment : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     auto labelArea = label.getLocalBounds();
     g.setColour (Colours::lightgrey.withAlpha(0.3f));
     Font font (Font (label.getHeight() * 0.8f, Font::plain).withTypefaceStyle ("Regular").italicised());
@@ -700,7 +700,7 @@ class chordProLabel : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
     auto labelArea = label.getLocalBounds();
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font ((Font (label.getHeight() * 2 / 3, Font::plain).withTypefaceStyle ("Regular").boldened().italicised()));
     g.setFont (font);
     g.setColour (chordProLyricColor.withAlpha(0.8f));
@@ -718,7 +718,7 @@ class chordProTab : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
     //auto labelArea = label.getLocalBounds();
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font (Font (label.getHeight(), Font::plain));
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
     g.setFont (font);
@@ -745,19 +745,27 @@ class chordProGrid : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
     //auto labelArea = label.getLocalBounds();
-    int leftPad = chordProLeftLabels ? 250 * chordProFontSize : 50;
+    int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font (Font (label.getHeight() * 1.0f, Font::plain));
    
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
+    /*
+    if (chordProMonospaceFont) {
+      font.setTypefaceName(Font::getDefaultMonospacedFontName());
+    } else {
+      font = font.withTypefaceStyle("Regular");
+    }
+    */
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
     int gridBars = label.getProperties()["gridBars"];
     //String text = label.getText().toStdString();
     //text = text.replace("|  ", "| ").trimEnd();
     //text = text.replace(" ","");
-    gridLength =  gridLength + 4;
+    gridLength = juce::jmax(gridLength + 4, 8);
     // Background
     Font fontSpacer = font;
+    //fontSpacer.setTypefaceName(Font::getDefaultMonospacedFontName());
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
     auto textHeight = (int) font.getHeight();
     g.setColour (chordProDarkMode ? Colours::white.withAlpha(0.08f) : Colours::grey.withAlpha(0.08f));
@@ -833,7 +841,7 @@ public:
       g.setFont (commentFont.italicised());
       g.setColour (chordProLyricColor.withAlpha(0.8f));
       g.drawFittedText ( sectionLabel,
-            0, 0, (int)(leftPad - (50 * chordProFontSize)), label.getHeight(),
+            0, 0, (int)(leftPad - (CP_DEFAULT_LEFT_MARGIN * chordProFontSize)), label.getHeight(),
             Justification::bottomRight, 1, 1.0f);
     }    
   }

@@ -1,4 +1,4 @@
-// Rackspace and song selector extension for Gig Performer by @rank13
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
@@ -69,6 +69,11 @@ const float CP_MAX_FONT_SIZE = 1.6f;
 const float CP_FONT_STEP_SIZE = 0.1f;
 const int CP_DEFAULT_IMAGES = 10;
 const int CP_TOP_PADDING = 20;
+const int CP_KEYBOARD_HEIGHT = 120;
+const int CP_KEYBOARD_WIDTH = 220;
+const int CP_KEYBOARD_SEPARATOR = 20;
+const int CP_DEFAULT_LEFT_MARGIN = 50;
+const int CP_EXPANDED_LEFT_MARGIN = 250;
 
 const juce::String CP_LIGHT_LYRIC_COLOR = "FF000000";
 const juce::String CP_LIGHT_CHORD_COLOR = "FF1496F1"; //"FF1E80F0"; //"FF6A9EBC"; //FFFC0000";

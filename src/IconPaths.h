@@ -1,4 +1,4 @@
- // Rackspace and song selector extension for Gig Performer by @rank13
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 static const unsigned char sidePanelOpenPathData[] = { 
 110,109,0,0,226,67,0,96,159,69,98,0,128,171,67,0,120,158,69,0,128,132,67,0,16,157,69,0,0,52,67,0,96,154,69,98,0,0,186,66,0,176,151,69,0,0,68,66,0,72,149,69,0,0,160,65,0,192,145,69,98,0,0,0,0,0,96,143,69,0,0,0,0,0,16,142,69,0,0,0,0,0,0,32,69,98,0,0,0,

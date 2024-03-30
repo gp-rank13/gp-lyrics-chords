@@ -1,4 +1,4 @@
-// Rackspace and song selector extension for Gig Performer by @rank13
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 #pragma once
 
@@ -432,8 +432,9 @@ public:
   void chordProSetColors();
   //void chordProSetFontSize(float newSize);
   void chordProImagesCheckAndAdd(int index);
+  void chordProDiagramKeyboardCheckAndAdd(int index);
   int chordProGetVisibleImageCount();
-  int chordProDiagramKeysVisibleCount();
+  //int chordProDiagramKeysVisibleCount();
   void static chordProCreateInvertedImages();
   void static saveWindowState();
   void static savePreferences();
@@ -510,8 +511,9 @@ public:
   OwnedArray<DrawableButton> prefButtons;
   //OwnedArray<Label> prefColorLabels;
   OwnedArray<ColourChangeButton> prefColorButtons;
-  //OwnedArray<ChordDiagramKeys> chordProDiagramKeys;
-  OwnedArray<ChordDiagramKeyboard> chordProDiagramKeys;
+  //OwnedArray<ChordDiagramKeys> chordProDiagramKeyboard;
+  OwnedArray<ChordDiagramKeyboard> chordProDiagramKeyboard;
+  OwnedArray<ChordDiagramFretboard> chordProDiagramFretboard;
   StringPairArray buttonColors;
   StringPairArray chordProColors;
   ClockTimer clockTimer;

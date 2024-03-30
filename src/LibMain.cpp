@@ -1,4 +1,4 @@
-// Rackspace and song selector extension for Gig Performer by @rank13
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 #include <regex>
 #include "LibMain.h"
@@ -177,7 +177,7 @@ void LibMain::OnStatusChanged(GPStatusType status) {
                 readPreferencesFile();
                 isFirstGigFileOpened = false;
             }
-             ExtensionWindow::updateButtonNames(getSongNames());
+            ExtensionWindow::updateButtonNames(getSongNames());
             ExtensionWindow::updateSetlistButtons(getSetlistNames());
             ExtensionWindow::chordProReadFile(0);
             setWidgetValue(WIDGET_CP_SCROLL, 0.0);
