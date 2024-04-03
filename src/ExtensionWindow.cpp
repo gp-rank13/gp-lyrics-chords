@@ -5,9 +5,13 @@
 #include "LibMain.h"
 #include "IconPaths.h"
 
+double timeCreate = Time::getCurrentTime().getMillisecondCounterHiRes();
+double timeContructor;
+double timeInitialize;
+
 ExtensionWindow* ExtensionWindow::extension = nullptr;
-//LibMain* lib = new LibMain(nullptr);   
-LibMain* lib;
+LibMain* lib = new LibMain(nullptr);   
+//LibMain* lib;
 Colour chordProLyricColor = Colour::fromString(CP_DARK_LYRIC_COLOR);  
 Colour chordProChordColor = Colour::fromString(CP_DARK_CHORD_COLOR);
 Colour viewPortBackground = Colour::fromString(BACKGROUND_COLOR);
@@ -29,10 +33,11 @@ extern std::string extensionPath;
 
 ExtensionWindow::ExtensionWindow ()
 {
+    timeContructor = Time::getCurrentTime().getMillisecondCounterHiRes();
     //LookAndFeel::setDefaultLookAndFeel(buttonsLnF);
     clockTimer.startTimer(TIMER_CLOCK);
     refreshTimer.startTimer(TIMER_UI_REFRESH);
-    lib = new LibMain(nullptr);
+    //lib = new LibMain(nullptr);
     preferences.reset (new DynamicObject);
     preferencesChordProColors.reset (new DynamicObject);
     /*
@@ -442,6 +447,7 @@ ExtensionWindow::ExtensionWindow ()
     }
 
     // ChordPro
+    /*
     for (auto i = 0; i < 100; ++i) {
         std::string number = std::to_string(i);
         auto label = new Label(number, number); 
@@ -452,7 +458,7 @@ ExtensionWindow::ExtensionWindow ()
         chordProLines[i]->setInterceptsMouseClicks(false, false);
         chordProContainer.addAndMakeVisible(chordProLines[i]);
     }
-
+    */
     // ChordPro Images
     //chordProImagesCheckAndAdd(CP_DEFAULT_IMAGES - 1);
     /*
@@ -470,14 +476,14 @@ ExtensionWindow::ExtensionWindow ()
         chordProDiagramKeyboard[i]->setInterceptsMouseClicks(false, false);
         chordProContainer.addAndMakeVisible(chordProDiagramKeyboard[i]);
     }
-     */
 
     for ( auto i = 0; i < CP_DEFAULT_IMAGES; ++i) {
         auto diagram = new ChordDiagramFretboard();
         chordProDiagramFretboard.add(diagram);
         chordProDiagramFretboard[i]->setInterceptsMouseClicks(false, false);
         chordProContainer.addAndMakeVisible(chordProDiagramFretboard[i]);
-    }
+    }  
+    */
 
     // Preferences
     //testButton.reset (new ColourChangeButton ("colourSelector"));
@@ -537,7 +543,6 @@ ExtensionWindow::ExtensionWindow ()
     containerRight.addChildComponent(noChordProLabel.get());
     addAndMakeVisible(floatingViewport);
     //preferencesContainer.addAndMakeVisible(prefToggle.get());
-
 
     extensionWindow.reset(new MyDocumentWindow());
     extensionWindow->setContentNonOwned(this, true);
@@ -877,7 +882,7 @@ void ExtensionWindow::resized()
                 } else if (chordProLines[i]->getProperties()["type"] == "image") {
                     rowHeight = 0.0;
                     int imageIndex = chordProLines[i]->getProperties()["imageIndex"]; 
-                    if (extension->chordProImages[imageIndex]->isVisible()) {
+                    //if (extension->chordProImages[imageIndex]->isVisible()) {
                         float originalWidth = (float)(extension->chordProImages[imageIndex]->getImage().getWidth()); 
                         float originalHeight = (float)(extension->chordProImages[imageIndex]->getImage().getHeight());
                         float ratio = originalWidth / (float)(viewportRight.getWidth() - 10);
@@ -900,7 +905,7 @@ void ExtensionWindow::resized()
                             extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                         }
                         rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : rowHeight + padding;
-                    }
+                    //}
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramKeyboard") {
                     //rowHeight = (CP_KEYBOARD_HEIGHT + 10) * chordProFontSize;
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
@@ -922,11 +927,11 @@ void ExtensionWindow::resized()
                     }
                     rowHeight = y + h - runningHeight;
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramFretboard") {
-                    rowHeight = 160.0 * chordProFontSize;
+                    rowHeight = CP_FRETBOARD_WIDTH * chordProFontSize;
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
 
                     for (int i = 0; i < chordProDiagramFretboard.size(); ++i) {
-                        chordProDiagramFretboard[i]->setBounds(leftPad + (i * 180 * chordProFontSize), runningHeight, 140 * chordProFontSize, rowHeight);
+                        chordProDiagramFretboard[i]->setBounds(leftPad + (i * (CP_FRETBOARD_WIDTH + CP_FRETBOARD_SEPARATOR) * chordProFontSize), runningHeight, CP_FRETBOARD_WIDTH * chordProFontSize, rowHeight);
             
                     }
                 }
@@ -936,7 +941,7 @@ void ExtensionWindow::resized()
                 chordProLines[i]->setBounds(10, runningHeight, chordProContainer.getWidth(), rowHeight);
                 runningHeight += rowHeight;
 
-                // Wrapping text
+                // Wrapping text for lyrics and chords
                 if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics" || chordProLines[i]->getProperties()["type"] == "lyricOnly") {
                     Font labelFont (Font (chordProLines[i]->getHeight() * 0.5f, Font::plain));
                     if (chordProLines[i]->getProperties()["type"] == "lyricOnly") labelFont.setHeight(chordProLines[i]->getHeight());
@@ -953,13 +958,15 @@ void ExtensionWindow::resized()
                    
                         if (i < chordProLines.size() - 1) {
                             if (chordProLines[i+1]->getName() != "wrap") { // Wrapped line doesn't yet exist - create one
+                                addChordProLine(i+1, "wrap");
+                                /*
                                 auto label = new Label("wrap", ""); 
                                 chordProLines.insert(i + 1, label);
                                 chordProLines[i+1]->setEditable (false, false, false);
                                 chordProLines[i+1]->setLookAndFeel(chordProLnF);
                                 chordProLines[i+1]->setInterceptsMouseClicks(false, false);
                                 chordProContainer.addAndMakeVisible(chordProLines[i+1]);
-
+                                */
                                
                                 //chordProLines[i+1]->setText(wrappedText, dontSendNotification);
                                 //chordProLines[i+1]->getProperties().set("wrap","true");
@@ -1662,6 +1669,9 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         }
     */
     } else if (buttonThatWasClicked == pinUnpinnedButton.get() || buttonThatWasClicked == pinPinnedButton.get()) {
+        //logToGP("Create: " + String(timeCreate).toStdString());
+        //logToGP("Constructor: " + String(timeContructor).toStdString());
+        //logToGP("Initialize: " + String(timeInitialize).toStdString());
         bool newPinnedStatus = !(extension->extensionWindow->isAlwaysOnTop());
         windowPinned = newPinnedStatus;
         pinUnpinnedButton->setVisible(!newPinnedStatus);
@@ -1847,7 +1857,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     } else if (buttonThatWasClicked == setlistButton.get()) {
         setlistContainer.setVisible(!setlistContainer.isVisible());
          if (!lib->inSetlistMode()) lib->switchToSetlistView();
-    } else if (buttonThatWasClicked->getProperties()["type"] == "setlistButton") {
+    } else if (buttonThatWasClicked->getProperties()["type"] == "setlistButton" && buttonThatWasClicked->getToggleState()) {
         //log("Setlist Button" + buttonThatWasClicked->getName());
        
         lib->switchToSetlist(buttonThatWasClicked->getName().getIntValue());
@@ -1919,6 +1929,8 @@ void ExtensionWindow::scrollWindow(double value) {
 }
 
 void ExtensionWindow::initialize() {
+    timeInitialize = Time::getCurrentTime().getMillisecondCounterHiRes();
+
     MessageManager::getInstance()->callAsync([]() {
         if (extension == nullptr) {
             extension = new ExtensionWindow();
@@ -1935,11 +1947,12 @@ void ExtensionWindow::initialize() {
 void ExtensionWindow::finalize()
 {
     savePreferences();
-    delete lib;
-    lib = nullptr;
-
-    delete extension;
-    extension = nullptr;
+    //delete lib;
+    //lib = nullptr;
+    if (extension != nullptr) {
+        delete extension;
+        extension = nullptr;
+    }
 }
 
 void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
@@ -2175,6 +2188,9 @@ void ExtensionWindow::chordProProcessText(std::string text) {
     //bool gridLineFirst = false;
     //String gridLabel;
     int gridBarCharacterLength = 0;
+    int gridMaxChordLength = 0;
+    int gridMaxBeats = 0;
+    int gridMaxBeatsWithChords = 0;
     bool chorusLine = false;
     //bool chorusLineFirst = false;
     //String chorusLabel;
@@ -2184,7 +2200,10 @@ void ExtensionWindow::chordProProcessText(std::string text) {
     extension->chordProReset();
     bool chordProNonImage = false;
 
+    //logToGP(text);
+
     // Extend size if needed
+    /*
     if (lines.size() > extension->chordProLines.size() - 1) {
         int priorLines = extension->chordProLines.size();
         int newLines = lines.size() - priorLines + 1;
@@ -2197,16 +2216,20 @@ void ExtensionWindow::chordProProcessText(std::string text) {
             extension->chordProLines[i]->setVisible(true);
         }
     }
+    */
 
     for (int i = 0; i < lines.size() + 1; ++i) { 
         line = lines[i].toStdString();
+        extension->addChordProLine();
         if (line.trim() != "") firstLineWithContent = true;
         if (firstLineWithContent) {
+            /*
             extension->chordProLines[i]->setVisible(true);
             extension->chordProLines[i]->setName("");
             extension->chordProLines[i]->getProperties().set("section", ""); 
             extension->chordProLines[i]->getProperties().set("sectionLabel", ""); 
             extension->chordProLines[i]->getProperties().set("originalText", ""); 
+            */
             //extension->chordProLines[i]->getProperties().set("wrap", "");           
             if (line.contains("{")) { // Directive
                 extension->chordProLines[i]->getProperties().set("type", "directive"); 
@@ -2233,7 +2256,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                         extension->chordProLines[i]->setVisible(!chordProLeftLabels);
                         
                     } else if (directiveName == "image") {
-                            extension->chordProLines[i]->getProperties().set("type", "image");                             
+                            //extension->chordProLines[i]->getProperties().set("type", "image");                             
                             #if JUCE_WINDOWS
                                 if (directiveParts.size() == 3) { // File path had a drive letter e.g. C:
                                     directiveValue = directiveParts[1].trim() + ":" + directiveParts[2].trim();
@@ -2256,13 +2279,14 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                             } else {
                                 image = ImageFileFormat::loadFrom(file);
                             }
-                            if (image.isValid()) {
-                                extension->chordProImagesCheckAndAdd(imageCount);
+                            if (image.isValid()) {   
+                                extension->addChordProImage();
                                 extension->chordProImages[imageCount]->setImage(image);
                                 extension->chordProImages[imageCount]->setImagePlacement (RectanglePlacement (RectanglePlacement::fillDestination | RectanglePlacement::xLeft | RectanglePlacement::yTop));
                                 extension->chordProImages[imageCount]->setVisible(true);
                                 extension->chordProImages[imageCount]->getProperties().set("path", file.getFullPathName()); 
                                 extension->chordProLines[i]->getProperties().set("imageIndex", imageCount);
+                                extension->chordProLines[i]->getProperties().set("type", "image");  
                                 imageCount++;
                             } else {
                                 extension->log("Image Not Found: " + file.getFullPathName());
@@ -2277,12 +2301,22 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                         chordParts.removeEmptyStrings();
                         String root;
                         int rootIndex = 0;
-                        Array<int> notes;
+                        //Array<int> notes;
                         if (definition[1] == "keys") {
+                            if (keyboardDiagramCount == 0) { // First line. All diagrams will be displayed.
+                                extension->chordProLines[i]->setVisible(true);
+                                extension->chordProLines[i]->getProperties().set("type", "diagramKeyboard"); 
+                                directiveValue = "";
+
+                            } else {
+                                extension->chordProLines[i]->setVisible(false);
+                            }
+                            /*
                             for (int j = 2; j < definition.size(); ++j) {
                                 int note = definition[j].getIntValue();
                                 notes.add(note);
                             }
+                            */
                             /*
                             if (chordParts[i].substring(1,2) == "#") {
                                 root = chord.substring(0,2);
@@ -2297,7 +2331,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                             logToGP("Root: " + root.toStdString() + " " + std::to_string(rootIndex));
                             */
                             definition.removeRange(0,2); // Leave only notes
-                            extension->chordProDiagramKeyboardCheckAndAdd(keyboardDiagramCount);
+                            extension->addChordProDiagramKeyboard();
                             extension->chordProDiagramKeyboard[keyboardDiagramCount]->updateChord(chord, definition);
                             extension->chordProDiagramKeyboard[keyboardDiagramCount]->updateChordDiagram(chordProTranspose, chordProTransposeDisplay);
                             extension->chordProDiagramKeyboard[keyboardDiagramCount]->updateKeyOnColour(chordProChordColor);
@@ -2314,15 +2348,43 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                                 extension->chordProDiagramKeyboard[keyboardDiagramCount]->keyboard[key]->keyOn = true;
                             }
                             */
-                            extension->chordProDiagramKeyboard[keyboardDiagramCount]->setVisible(true);
+                            //extension->chordProDiagramKeyboard[keyboardDiagramCount]->setVisible(true);
                             keyboardDiagramCount++;
-                        } else if (definition[1] == "base-fret") {
-                            fretboardDiagramCount++;
+                        } else if (definition[1].contains("fret")) {
+                             if (fretboardDiagramCount == 0) { // First line. All diagrams will be displayed.
+                                extension->chordProLines[i]->setVisible(true);
+                                extension->chordProLines[i]->getProperties().set("type", "diagramFretboard"); 
+                                directiveValue = "";
+
+                            } else {
+                                extension->chordProLines[i]->setVisible(false);
+                            }
+                            
+                            int fretsIndex = definition.indexOf("frets", true, 1);
+                            if (fretsIndex > 0) {
+                                StringArray frets;
+                                for (int j = fretsIndex + 1; j < fretsIndex + 7; ++j) {
+                                    if (j < definition.size())
+                                        frets.add(definition[j]);
+                                }
+                                if (frets.size() == 6) { // Valid diagram
+                                    int baseIndex = definition.indexOf("base-fret", true, 1);
+                                    if (baseIndex > 0) { // Append to fret list
+                                        frets.add(definition[baseIndex + 1]);
+                                    }
+                                    extension->addChordProDiagramFretboard();
+                                    extension->chordProDiagramFretboard[fretboardDiagramCount]->updateChord(chord, frets);
+                                    extension->chordProDiagramFretboard[fretboardDiagramCount]->updateChordDiagram(chordProTranspose, chordProTransposeDisplay);
+                                    extension->chordProDiagramFretboard[fretboardDiagramCount]->updateKeyOnColour(chordProChordColor);
+                                    fretboardDiagramCount++;
+                                }
+                            }
+                            
                         }
                             
-                        extension->chordProLines[i]->setVisible(false);
+                        
 
-                    } else if (directiveName == "chord") {
+                    } /* else if (directiveName == "chord") {
                         if (keyboardDiagramCount > 0) {
                             extension->chordProLines[i]->getProperties().set("type", "diagramKeyboard"); 
                         } else {
@@ -2334,7 +2396,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                         } else {
                             extension->chordProLines[i]->setVisible(false);
                         }
-                    } else if (directiveName == "x_gp_transpose_accidental") {
+                    } */ else if (directiveName == "x_gp_transpose_accidental") {
                         if (directiveValue.toLowerCase() == "flat") {
                             chordProTransposeDisplay = flat;
                         } else if (directiveValue.toLowerCase() == "sharp") {
@@ -2395,6 +2457,9 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                 } else if (directiveName == "end_of_verse" || directiveName == "eov") {
                     //chorusLine = false;
                     //chorusLineFirst = false;
+                } else if (directiveName.startsWith("start_of_")) {
+                    firstSectionLine = true;
+                    sectionLabel = directiveValue;
                 } else {
                     firstSectionLine = false;
                 }
@@ -2420,22 +2485,31 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     //String temp = line.replace(" ","");
                     String temp = line;
                     temp = temp.replace("||","|").replace("|:","|").replace(":|","|"); // Convert special characters to single character
-                    temp = temp.replace(".", ""); // Remove the beat markers for the length calculation
+                    //temp = temp.replace(".", ""); // Remove the beat markers for the length calculation
                     StringArray parts = StringArray::fromTokens(temp,"|","");
                     parts.removeEmptyStrings(true);
+                    //int beats = 1;
                     for (int j = 0; j < parts.size(); ++j) {
                         StringArray chords = StringArray::fromTokens(parts[j], false);
                         chords.removeEmptyStrings(true);
-                        int chordLength = 0;
+                        if (chords[0].getIntValue() > 0) { // Check and remove volta
+                            chords.remove(0);
+                        }
+                        if (chords.size() > gridMaxBeats) gridMaxBeats = chords.size();
+                        chords.removeString(".");
+                        if (chords.size() > gridMaxBeatsWithChords) gridMaxBeatsWithChords = chords.size();
                         for (int k = 0; k < chords.size(); ++k) {
-                            chordLength += juce::jmax(chords[k].length(), chords[k].contains("/") ? 7 : 3); // Allow a minimum of 3 characters for every chord to account for transposition
+                            int length = juce::jmax(chords[k].length(), chords[k].contains("/") ? 7 : 3); // Allow a minimum of 3 characters for every chord to account for transposition
+                            if (length > gridMaxChordLength) gridMaxChordLength = length;
+                            //chordLengthCombined += juce::jmax(chords[k].length(), chords[k].contains("/") ? 7 : 3); // Allow a minimum of 3 characters for every chord to account for transposition
                         }
                         //int length = juce::jmax(parts[j].length(), 3); // Allow a minimum of 3 characters for every chord to account for transposition
+                        /*
                         if (chordLength > gridBarCharacterLength) {
                             gridBarCharacterLength = chordLength;
                             //extension->log("Grid bar length: " + std::to_string(gridBarCharacterLength));
-
                         }
+                        */
                     }
                     extension->chordProLines[i]->getProperties().set("gridBars", parts.size());
                     //extension->log("Grid bars: " + std::to_string(parts.size()));
@@ -2449,7 +2523,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     extension->chordProLines[i]->getProperties().set("section", "chorus"); 
                     //if (chorusLineFirst) extension->chordProLines[i]->getProperties().set("sectionLabel", chorusLabel);
                     //chorusLineFirst = false;
-                }
+                } 
                 if (firstSectionLine) {
                     extension->chordProLines[i]->getProperties().set("sectionLabel", sectionLabel);
                     sectionLabel = "";
@@ -2503,17 +2577,47 @@ void ExtensionWindow::chordProProcessText(std::string text) {
         }
     }
     if (!chordProNonImage) extension->chordProImagesOnly = true;
-    if (gridBarCharacterLength > 0) {
+    if (gridMaxChordLength > 0) {
         //extension->log("Grid Bar: " + std::to_string(gridBarCharacterLength));
         for (int i = 0; i < extension->chordProLines.size(); ++i) { 
             //extension->log("Line " + extension->chordProLines[i]->getProperties()["type"].toString());
             if (extension->chordProLines[i]->getProperties()["type"] == "grid") {
-                //extension->log("Grid line " + std::to_string(i));
-                extension->chordProLines[i]->getProperties().set("gridBarLength", gridBarCharacterLength); 
-                //extension->log("Grid bar: " + std::to_string(gridBarCharacterLength));
+                //extension->log("Grid line " + extension->chordProLines[i]->getText());
+                //extension->chordProLines[i]->getProperties().set("gridBarLength", gridBarCharacterLength); 
+                extension->chordProLines[i]->getProperties().set("gridBarLength", gridMaxChordLength * gridMaxBeatsWithChords);
+                extension->chordProLines[i]->getProperties().set("gridBeats", gridMaxBeats);
+                extension->chordProLines[i]->getProperties().set("gridBeatsWithChords", gridMaxBeatsWithChords);
+
             }
         }
+        //extension->log("Max Chord Length: " + std::to_string(gridMaxChordLength) + ", Max Beats: " + std::to_string(gridMaxBeats) + ", With Chords: " + std::to_string(gridMaxBeatsWithChords));
     }
+    // Duplicate blank row suppression and row insertion before sections
+    int lastBlank = -1;
+    int rowCounter = 0;
+    for (int i = 0; i < extension->chordProLines.size(); ++i) { 
+        if (extension->chordProLines[i]->isVisible()) {
+            if (extension->chordProLines[i]->getText() == "" && extension->chordProLines[i]->getProperties()["type"] != "image" && extension->chordProLines[i]->getProperties()["type"] != "diagramKeyboard" && extension->chordProLines[i]->getProperties()["type"] != "diagramFretboard") {
+                //logToGP("Line " + std::to_string(i) + " checking for duplicate blank lines");
+                if (rowCounter - 1 == lastBlank) {
+                    extension->chordProLines[i]->setVisible(false);
+                 } 
+                lastBlank = rowCounter;
+            } else if (((extension->chordProLines[i]->getProperties()["type"] == "label" || extension->chordProLines[i]->getProperties()["type"] == "diagramKeyboard" || extension->chordProLines[i]->getProperties()["type"] == "diagramFretboard" ) && rowCounter - 1 != lastBlank)
+                        || (extension->chordProLines[i]->getProperties()["sectionLabel"] != "" && chordProLeftLabels && rowCounter - 1 != lastBlank)) {
+                //logToGP("Line " + std::to_string(i) + " has no space before it");
+                extension->addChordProLine(i-1);
+                //auto label = new Label("blank", ""); 
+                //extension->chordProLines.insert(i - 1, label);
+                extension->chordProLines[i - 1]->getProperties().set("type", "blankLine"); 
+                //extension->chordProLines[i - 1]->setVisible(true);
+                i++;
+                //lastBlank = rowCounter - 1;
+            }
+            rowCounter++;
+        }
+    }
+
     extension->chordProDisplayGUI(true);
     extension->chordProSetTranspose(transpose);
 }
@@ -2524,13 +2628,16 @@ void ExtensionWindow::chordProReadFile(int index) {
     std::string chordProFile = lib->getChordProFilenameForSong(index);
     //extension->log(std::to_string(index) + ": " + chordProFile);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
+    //extension->log((extension->chordProForCurrentSong ? "TRUE " : "FALSE " ) + std::to_string(index) + ": " + chordProFile);
     //chordProTranspose = 0;
+    
     chordProTransposeDisplay = original;
     chordProSetTranspose(0);
     if (extension->chordProForCurrentSong) {
         File chordProFullPath = File(chordProFile);
         if (chordProFullPath.existsAsFile()) {
             gigperformer::sdk::GPUtils::loadTextFile(chordProFullPath.getFullPathName().toStdString(), chordProFileText);
+            //extension->log(chordProFileText);
             chordProProcessText(chordProFileText);   
             extension->noChordProLabel->setVisible(false);
         } else {
@@ -2553,27 +2660,35 @@ void ExtensionWindow::chordProRefresh() {
 }
 
 void ExtensionWindow::chordProReset() {
+    /*
     for (int i = 0; i < extension->chordProLines.size(); ++i) { 
         extension->chordProLines[i]->setLookAndFeel(extension->chordProLnF);
         extension->chordProLines[i]->setText("", dontSendNotification);
         extension->chordProLines[i]->setVisible(false);
         extension->chordProLines[i]->getProperties().set("type", ""); 
     }
+    */
+    /*
     for (int i = 0; i < extension->chordProImages.size(); ++i) { 
         extension->chordProImages[i]->setVisible(false);
         extension->chordProImages[i]->getProperties().set("path", ""); 
     }
+    */
+    extension->chordProLines.clear();
+    extension->chordProImages.clear();
     extension->chordProDiagramKeyboard.clear();
+    extension->chordProDiagramFretboard.clear();
     /*
     for (int i = 0; i < extension->chordProDiagramKeyboard.size(); ++i) { 
         extension->chordProDiagramKeyboard[i]->setVisible(false);
         extension->chordProDiagramKeyboard[i]->allNotesOff();
     }
-    */
+    
     for (int i = 0; i < extension->chordProDiagramFretboard.size(); ++i) { 
         extension->chordProDiagramFretboard[i]->setVisible(false);
         extension->chordProDiagramFretboard[i]->allNotesOff();
     }
+    */
     missingImageContainer.setVisible(false);
     extension->chordProImagesOnly = false;
     extension->noChordProLabel->setVisible(true);
@@ -2666,11 +2781,16 @@ void ExtensionWindow::chordProSetTranspose(int transpose) {
         extension->chordProDiagramKeyboard[i]->repaint();
     }
 
+    for (int i = 0; i < extension->chordProDiagramFretboard.size(); ++i) {
+        extension->chordProDiagramFretboard[i]->updateChordDiagram(chordProTranspose, chordProTransposeDisplay);
+        extension->chordProDiagramFretboard[i]->repaint();
+    }
+
 
     extension->repaint();
 }
 
-
+/*
 void ExtensionWindow::chordProImagesCheckAndAdd(int index) {
     int existingCount = chordProImages.size();
     int newCount = index + 1;
@@ -2684,7 +2804,25 @@ void ExtensionWindow::chordProImagesCheckAndAdd(int index) {
         }
     }
 } 
+*/
+void ExtensionWindow::addChordProLine(int atIndex, String name) {
+    int index = atIndex >= 0 ? atIndex : chordProLines.size();
+    auto label = new Label(name, ""); 
+    chordProLines.insert(index, label);
+    chordProLines[index]->setEditable (false, false, false);
+    chordProLines[index]->setLookAndFeel(chordProLnF);
+    chordProLines[index]->setInterceptsMouseClicks(false, false);
+    chordProContainer.addAndMakeVisible(chordProLines[index]);
+}
 
+void ExtensionWindow::addChordProImage() {
+    int index = chordProImages.size();
+    auto imageComponent = new ImageComponent(std::to_string(index));
+    chordProImages.add(imageComponent);
+    chordProImages[index]->setInterceptsMouseClicks(false, false);
+    chordProContainer.addAndMakeVisible(chordProImages[index]);
+}
+/*
 void ExtensionWindow::chordProDiagramKeyboardCheckAndAdd(int index) {
     int existingCount = chordProDiagramKeyboard.size();
     int newCount = index + 1;
@@ -2699,6 +2837,22 @@ void ExtensionWindow::chordProDiagramKeyboardCheckAndAdd(int index) {
         }
     }
 } 
+*/
+void ExtensionWindow::addChordProDiagramKeyboard() {
+    int index = chordProDiagramKeyboard.size();
+    auto diagram = new ChordDiagramKeyboard();
+    chordProDiagramKeyboard.add(diagram);
+    chordProDiagramKeyboard[index]->setDarkMode(chordProDarkMode);
+    chordProContainer.addAndMakeVisible(chordProDiagramKeyboard[index]);
+}
+
+void ExtensionWindow::addChordProDiagramFretboard() {
+    int index = chordProDiagramFretboard.size();
+    auto diagram = new ChordDiagramFretboard();
+    chordProDiagramFretboard.add(diagram);
+    chordProDiagramFretboard[index]->setDarkMode(chordProDarkMode);
+    chordProContainer.addAndMakeVisible(chordProDiagramFretboard[index]);
+}
 
 int ExtensionWindow::chordProGetVisibleImageCount() {
     int visible = 0;
@@ -3073,6 +3227,7 @@ void MyDocumentWindow::closeButtonPressed() {
     //ExtensionWindow::saveWindowState();
     ExtensionWindow::savePreferences();
     ExtensionWindow::displayWindow(false);
+    //setVisible(false);
 }
 
 void MyDocumentWindow::moved() { 
@@ -3097,6 +3252,16 @@ void RefreshTimer::timerCallback() {
     //ExtensionWindow::compareButtonNames(lib->inSetlistMode() ? lib->getSongNames() : lib->getRackspaceNames());
     if (lib == nullptr) return;
     if (ExtensionWindow::isActiveSearch()) return;
+    if (!ExtensionWindow::extension->prefsLoaded) { // Useful when Extension is activated in GP after the gig file is already loaded.
+        lib->readPreferencesFile();
+        ExtensionWindow::updateSetlistButtons(lib->getSetlistNames());
+        ExtensionWindow::selectSetlistButton(lib->getCurrentSetlistIndex());
+
+        ExtensionWindow::refreshUI();
+        ExtensionWindow::chordProReadFile(ExtensionWindow::getButtonSelected());
+
+        //ExtensionWindow::refreshUI();
+    }
     ExtensionWindow::compareButtonNames(lib->getSongNames());
     ExtensionWindow::compareSubButtonNames(ExtensionWindow::getSubButtonNamesByIndex(ExtensionWindow::getButtonSelected()));
     ExtensionWindow::checkSongListPosition();

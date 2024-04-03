@@ -74,8 +74,9 @@ public:
     std::vector<std::string> getSongNames();
     std::vector<std::string> getSongPartNames(int songIndex);
     std::vector<std::string> getVariationNamesForSong(int songIndex);
+     void readPreferencesFile();
 
 private:
     std::vector<std::vector<std::string>> getAllVariationNames();
-    void readPreferencesFile();
+   
 };

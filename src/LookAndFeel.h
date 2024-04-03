@@ -759,17 +759,21 @@ public:
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
     int gridBars = label.getProperties()["gridBars"];
+    int gridBeats = jmax((int)label.getProperties()["gridBeats"], 1);
+    int gridBeatsWithChords = label.getProperties()["gridBeatsWithChords"];
     //String text = label.getText().toStdString();
     //text = text.replace("|  ", "| ").trimEnd();
     //text = text.replace(" ","");
-    gridLength = juce::jmax(gridLength + 4, 8);
+    //gridLength = juce::jmax(gridLength + 4, 8);
+    gridLength = juce::jmax(gridLength > gridBeats ? gridLength + 4 : gridLength, 8);
     // Background
     Font fontSpacer = font;
     //fontSpacer.setTypefaceName(Font::getDefaultMonospacedFontName());
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
     auto textHeight = (int) font.getHeight();
     g.setColour (chordProDarkMode ? Colours::white.withAlpha(0.08f) : Colours::grey.withAlpha(0.08f));
-    g.fillRect( leftPad, 0, textWidth + (int)(label.getHeight() * 0.16), textHeight);
+    if (label.getText() != "")
+      g.fillRect( leftPad, 0, textWidth + (int)(label.getHeight() * 0.16), textHeight);
     //font = font.withHeight(label.getHeight());
 
     // Post Comments
@@ -783,6 +787,7 @@ public:
     // Bars and Chords
     int runningTextWidth = 0;
     int barCount = 1;
+    int beatCount = 0;
     StringArray parts = StringArray::fromTokens(label.getText(),false);
     parts.removeEmptyStrings();
     for (int i = 0; i < parts.size(); ++i) { 
@@ -802,6 +807,7 @@ public:
           barCharacter.setText(juce::String::charToString(0x1D107));
         }
         characterLength = 1;
+        beatCount = 1;
         Font barFont (Font (label.getHeight() * 1.4f, Font::plain));
         barFont.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
@@ -824,15 +830,34 @@ public:
         font = font.withHeight(label.getHeight());
         g.setFont(font);
         g.setColour(chordProChordColor);
-        if (partCharacter == ".") {
-          partCharacter = " ";
+        if (partCharacter.getIntValue() > 0) { // Volta
+          g.setColour( chordProLyricColor.withAlpha(0.6f));
+          g.setFont(font.withHeight(label.getHeight() * 0.5f));
+          int adjustment = (int)(fontSpacer.getStringWidthFloat(" ") * 0.6f);
+          g.drawFittedText (partCharacter,
+            leftPad + runningTextWidth - adjustment, 0, label.getWidth(), label.getHeight (),
+            Justification::topLeft, 1, 1.0f);
+
         } else {
-          partCharacter = ChordPro::CP_Transpose(partCharacter, chordProTranspose, chordProTransposeDisplay);
+          if (beatCount > 1) {
+            float width = font.getStringWidthFloat(" ") * (float)(gridLength / gridBeats);
+            //runningTextWidth += ((int)font.getStringWidthFloat(" ") 
+          }
+          if (partCharacter != ".") {
+            partCharacter = ChordPro::CP_Transpose(partCharacter, chordProTranspose, chordProTransposeDisplay);
+            g.drawFittedText (partCharacter,
+              leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
+              Justification::centredLeft, 1, 1.0f);
+            //runningTextWidth += ((int)font.getStringWidthFloat(" ") * gridLength / gridBeats);
+
+          } else {
+
+          }
+          runningTextWidth += (int)(font.getStringWidthFloat(" ") * (float)(gridLength / gridBeats));
+          beatCount++;
+          //runningTextWidth += ((int)font.getStringWidthFloat(" ") * (characterLength + 1));
         }
-        g.drawFittedText (partCharacter,
-          leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
-          Justification::centredLeft, 1, 1.0f);
-        runningTextWidth += ((int)font.getStringWidthFloat(" ") * (characterLength + 1));
+
       }
     }
     // Section Label

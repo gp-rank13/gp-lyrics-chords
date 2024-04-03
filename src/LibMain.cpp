@@ -169,14 +169,16 @@ void LibMain::OnStatusChanged(GPStatusType status) {
     switch (status) {
         case GPStatus_GigStartedLoading:
             isGigFileLoading = true;
+            consoleLog("Gig Started Loading");
             break;
         case GPStatus_GigFinishedLoading:
-            //consoleLog("Gig Finished Loading");
+            consoleLog("Gig Finished Loading");
             isGigFileLoading = false;
             if (isFirstGigFileOpened) {
                 readPreferencesFile();
                 isFirstGigFileOpened = false;
             }
+            //readPreferencesFile();
             ExtensionWindow::updateButtonNames(getSongNames());
             ExtensionWindow::updateSetlistButtons(getSetlistNames());
             ExtensionWindow::chordProReadFile(0);
@@ -209,6 +211,7 @@ void LibMain::OnStatusChanged(GPStatusType status) {
 }
 
 void LibMain::OnOpen() {
+    consoleLog("Opened");
     extensionPath = getPathToMe();
     ExtensionWindow::initialize();
 }
@@ -252,6 +255,7 @@ void LibMain::OnVariationChanged(int oldIndex, int newIndex) {
 void LibMain::OnSongChanged(int, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && inSetlistMode()) {
+        consoleLog("Song changed");
         ExtensionWindow::updateButtonNames(getSongNames());
         ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);
@@ -285,12 +289,14 @@ void LibMain::OnSetlistChanged(const std::string&) {
         ExtensionWindow::updateButtonNames(getSongNames());
         //ExtensionWindow::selectButton(getCurrentSongIndex());
         ExtensionWindow::selectSetlistButton(getCurrentSetlistIndex());
+        //consoleLog("Song: " + std::to_string(songIndex));
         ExtensionWindow::chordProReadFile(songIndex);
         if (!ExtensionWindow::isButtonSelected(songIndex)) { // If selected in GP directly, ensure buttons are in sync
             ExtensionWindow::selectButton(songIndex);
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(songIndex) : getSongPartNames(songIndex));
             ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
         }
+        
     }
 }
 

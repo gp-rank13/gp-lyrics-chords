@@ -56,6 +56,7 @@ private:
     OwnedArray<ChordDiagramNote> fretboard;
     int numberOfFrets = 6;
     int numberOfStrings = 6;
+    int baseFret = 1;
     String chord = "";
     String chordLabel = "";
     StringArray chordNotes;

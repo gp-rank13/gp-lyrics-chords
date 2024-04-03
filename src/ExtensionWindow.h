@@ -404,6 +404,7 @@ public:
   bool static isActiveSearch();
   void static filterButtons(String text);
 
+
   Image static getWindowIcon();
   void mouseDrag ( const MouseEvent& /*e*/) override
     {
@@ -431,8 +432,12 @@ public:
   void chordProDisplayGUI(bool display);
   void chordProSetColors();
   //void chordProSetFontSize(float newSize);
-  void chordProImagesCheckAndAdd(int index);
-  void chordProDiagramKeyboardCheckAndAdd(int index);
+  //void chordProImagesCheckAndAdd(int index);
+  //void chordProDiagramKeyboardCheckAndAdd(int index);
+  void addChordProLine(int atIndex = -1, String name = "");
+  void addChordProImage();
+  void addChordProDiagramKeyboard();
+  void addChordProDiagramFretboard();
   int chordProGetVisibleImageCount();
   //int chordProDiagramKeysVisibleCount();
   void static chordProCreateInvertedImages();
@@ -467,6 +472,7 @@ public:
   SharedResourcePointer<setlistListButtonLookAndFeel> setlistListButtonLnF;
   SharedResourcePointer<noSongLabelLookAndFeel> noSongLabelLnF;
   SharedResourcePointer<noChordProLabelLookAndFeel> noChordProLabelLnF;
+  bool prefsLoaded = false;
 
  private:
   void log(String text);
@@ -528,7 +534,6 @@ public:
   bool chordProTwoColumns = false;
   //bool chordProDarkMode = false;
   bool fitHeight = false;
-  bool prefsLoaded = false;
   bool pendingDisplayWindow = false;
   bool windowPinned = false;
   bool windowFullscreen = false;
