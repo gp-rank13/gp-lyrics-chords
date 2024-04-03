@@ -170,12 +170,15 @@ void ChordDiagramFretboard::paint(Graphics& g) {
         auto bounds = Rectangle<int>(x - (stringWidth * 0.5), labelHeight - (fretHeight * 0.3), stringWidth, fretHeight);
         if (chordNotes[i] == "x" || chordNotes[i] == "0" || chordNotes[i] == "o") {
             String character = chordNotes[i];
+            Font font (Font(fretHeight, Font::plain).withTypefaceStyle ("Regular"));
             if (character == "0" || character == "o") {
                 character = juce::String::charToString(0x25CB);
-                g.setFont(Font(fretHeight * 1.5f));
-            } else {
-                g.setFont(Font(fretHeight));
-            }
+                font.setHeight(fretHeight * 1.5f);
+            } 
+            #if JUCE_WINDOWS
+                font.setTypefaceName("Lucida Sans Unicode");
+            #endif
+            g.setFont(font);
             g.drawFittedText(character, bounds, Justification::centred, 1, 1.0f);
         } else {
             g.fillEllipse(x - adjustment, labelHeight + (fretHeight * 0.5) - adjustment + (fretHeight * chordNotes[i].getIntValue()), size, size);

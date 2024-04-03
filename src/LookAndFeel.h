@@ -812,7 +812,7 @@ public:
         barFont.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
            barFont.setTypefaceName("Lucida Sans Unicode");
-           barFont.setHeight(label.getHeight() * 1.4f);
+           barFont.setHeight(label.getHeight() * 2.0f);
         #endif
         barCharacter.setFont( barFont );
         barCharacter.setJustification( juce::Justification::centredLeft );
