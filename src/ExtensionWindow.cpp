@@ -711,23 +711,24 @@ void ExtensionWindow::resized()
         }
         if (chordProImagesOnly && chordProForCurrentSong) {
             iconBounds = iconBounds.withX(iconBounds.getX() - 40);
+            columnsOneButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
+            columnsTwoButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
+
             if (chordProTwoColumns) {
                 //columnsOneButton->setBounds (r.removeFromRight (45).withSizeKeepingCentre (27, 27));
-                columnsOneButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
                 columnsOneButton->setVisible(chordProImagesOnly && columnsOneButton->getX() > headerLabelWidth + 20);
             } else {
                 //columnsTwoButton->setBounds (r.removeFromRight (45).withSizeKeepingCentre (27, 27));
-                columnsTwoButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
                 columnsTwoButton->setVisible(chordProImagesOnly && columnsTwoButton->getX() > headerLabelWidth + 20);
             }
             iconBounds = iconBounds.withX(iconBounds.getX() - 40);
+            fitWidthButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
+            fitHeightButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
             if (fitHeight) {
                 //fitWidthButton->setBounds (r.removeFromRight (45).withSizeKeepingCentre (27, 27));
-                fitWidthButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
                 fitWidthButton->setVisible(chordProImagesOnly && fitWidthButton->getX() > headerLabelWidth + 20);
             } else {
                 //fitHeightButton->setBounds (r.removeFromRight (45).withSizeKeepingCentre (27, 27));
-                fitHeightButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
                 fitHeightButton->setVisible(chordProImagesOnly && fitHeightButton->getX() > headerLabelWidth + 20);
             }
         }

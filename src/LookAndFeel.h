@@ -702,7 +702,7 @@ public:
     auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font ((Font (label.getHeight() * 2 / 3, Font::plain).withTypefaceStyle ("Regular").boldened().italicised()));
-    font.setTypefaceName(Font::getDefaultSansSerifFontName());
+    //font.setTypefaceName(Font::getDefaultSansSerifFontName());
     g.setFont (font);
     g.setColour (chordProLyricColor.withAlpha(0.8f));
     g.drawFittedText (label.getText(),
