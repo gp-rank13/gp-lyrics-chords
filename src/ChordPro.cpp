@@ -164,7 +164,7 @@ void ChordDiagramFretboard::paint(Graphics& g) {
 
     // Note markers
     x = stringWidth;
-    float size = fretHeight * 0.7f;
+    float size = fretHeight * 0.6f;
     float adjustment = size * 0.5f;
     for (int i = 0; i < 6; ++i) {
         auto bounds = Rectangle<int>(x - (stringWidth * 0.5), labelHeight - (fretHeight * 0.3), stringWidth, fretHeight);
@@ -174,7 +174,9 @@ void ChordDiagramFretboard::paint(Graphics& g) {
             if (character == "0" || character == "o") {
                 character = juce::String::charToString(0x25CB);
                 font.setHeight(fretHeight * 1.5f);
-            } 
+            } else {
+                font.setHeight(fretHeight * 1.2f);
+            }
             #if JUCE_WINDOWS
                 font.setTypefaceName("Lucida Sans Unicode");
             #endif
