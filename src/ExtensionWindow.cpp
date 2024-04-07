@@ -727,10 +727,14 @@ void ExtensionWindow::resized()
     clock->setBounds (getWidth()/2 - 50, 0, 100, headerHeight);
     clock->setVisible(getWidth() > 725 && clock->getX() > headerLabelWidth ? true : false);
     if (chordProImagesOnly && getWidth() < 560) clock->setVisible(false);
-    if (viewportRight.getWidth() <= 365 && viewportRight.isVisible()) fontButtonContainer.setVisible(false);
-    if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) missingImageContainer.setVisible(false);
-    if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) transposeContainer.setVisible(false);
-    if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) searchContainer.setVisible(false);
+    if (fontButtonContainer.getX() < x + 5) fontButtonContainer.setVisible(false);
+    if (missingImageContainer.getX() < x + 5) missingImageContainer.setVisible(false);
+    if (transposeContainer.getX() < x + 5) transposeContainer.setVisible(false);
+    if (searchContainer.getX() < x + 5) searchContainer.setVisible(false);
+    //if (viewportRight.getWidth() <= 365 && viewportRight.isVisible()) fontButtonContainer.setVisible(false);
+    //if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) missingImageContainer.setVisible(false);
+    //if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) transposeContainer.setVisible(false);
+    //if (viewportRight.getWidth() <= 375 && viewportRight.isVisible()) searchContainer.setVisible(false);
     //auto r = header->getBounds();
     int iconX = header->getBounds().getWidth() - 60;
     int iconY = header->getBounds().getY();
@@ -845,13 +849,6 @@ void ExtensionWindow::resized()
     container.setBounds(0, 50, juce::jmax (minWindowWidth-10, x - 10), headerHeight + (buttonHeight * rowCount) + padding);
     if (searchContainer.isVisible() && !displaySongPanel) container.setBounds(0, 50, DEFAULT_SONG_LIST_WIDTH - 10, headerHeight + (buttonHeight * rowCount) + padding);
     containerRight.setBounds(juce::jmax (minWindowWidth-10, x - 10), headerHeight, getWidth()- juce::jmax (minWindowWidth, x), getHeight() - headerHeight);
-    fontButtonContainer.setBounds(getWidth() - 360, headerHeight, 330, headerHeight);
-    missingImageContainer.setBounds(getWidth() - 370, headerHeight, 360, headerHeight);
-    transposeContainer.setBounds(getWidth() - 420, headerHeight, 400, headerHeight);
-    searchContainer.setBounds(getWidth() - 430, headerHeight, 420, headerHeight);
-    searchBox->setBounds(100, 0, 310, headerHeight);
-    noSongsLabel->setBounds(0, headerHeight * 4, x, 100);
-    noChordProLabel->setBounds(0, headerHeight * 4, getWidth() - x, 100);
     
     if (draggableResizerEditor.isDragging()) {
         containerEditor.setBounds(juce::jmin(juce::jmax (x + 250, editorX), getWidth() - 80), headerHeight, juce::jmax(getWidth() - juce::jmax (x + 250, editorX), 80), getHeight() - headerHeight);
@@ -862,7 +859,17 @@ void ExtensionWindow::resized()
     editorHeaderContainer.setBounds(0, 0, containerEditor.getWidth(), headerHeight);
     chordProEditor->setBounds(0, headerHeight, containerEditor.getWidth(), containerEditor.getHeight() - headerHeight);
 
-
+    int popOverRightX = containerEditor.isVisible() ? containerEditor.getX() : getWidth();
+    int rightPad = containerEditor.isVisible() ? 0 : 10;
+    fontButtonContainer.setBounds(popOverRightX - rightPad - 330, headerHeight, 330, headerHeight);
+    missingImageContainer.setBounds(popOverRightX - rightPad - 360, headerHeight, 360, headerHeight);
+    transposeContainer.setBounds(popOverRightX - rightPad - 400, headerHeight, 400, headerHeight);
+    searchContainer.setBounds(popOverRightX - rightPad - 420, headerHeight, 420, headerHeight);
+    
+    searchBox->setBounds(100, 0, 310, headerHeight);
+    noSongsLabel->setBounds(0, headerHeight * 4, x, 100);
+    noChordProLabel->setBounds(0, headerHeight * 4, getWidth() - x, 100);
+    
     viewport.setBounds(0, headerHeight * 2, juce::jmax (minWindowWidth, x), getHeight() - headerHeight);
     viewport.setViewPosition(viewPos);
     viewportRight.setBounds(juce::jmax (minWindowWidth, x), headerHeight, getWidth() - juce::jmax (minWindowWidth, x), getHeight() - headerHeight);
@@ -892,7 +899,7 @@ void ExtensionWindow::resized()
 
     editorLabel->setBounds(0, 0, 80, headerHeight);
     editorSaveButton->setBounds(80, 5, 70, headerHeight - 10);
-    editorCloseButton->setBounds(containerEditor.getWidth() - 40, 15, 20, 20);
+    editorCloseButton->setBounds(containerEditor.getWidth() - 40, 16, 17, 17);
     editorCloseButton->setVisible(editorCloseButton->getX() > 150);
 
     preferencesContainer.setBounds(x, headerHeight, getWidth() - x, getHeight());
@@ -1998,8 +2005,8 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     } else if (buttonThatWasClicked == preferencesCloseButton.get()) {
         updatePreferencesColors();
         savePreferences();
-        chordProReadFile(getButtonSelected());
-
+        //chordProReadFile(getButtonSelected());
+        chordProProcessText(chordProEditor->getText().toStdString());
     } else if (buttonThatWasClicked == preferencesButton.get()) {
         displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == searchButton.get()) {
@@ -3207,6 +3214,7 @@ void ExtensionWindow::displayPreferencesContainer(bool display) {
 void ExtensionWindow::displayEditorContainer(bool display) {
     extension->containerEditor.setVisible(display);
     extension->draggableResizerEditor.setVisible(display);
+    extension->resized();
 }
 
 void ExtensionWindow::setSongPanelPosition(bool display) {
