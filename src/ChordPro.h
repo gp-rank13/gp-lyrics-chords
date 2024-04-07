@@ -16,6 +16,12 @@ struct ChordDiagramNote
     bool noteOn = false;
 };
 
+struct ChordDiagramFret
+{
+    int fret = 0;
+    int finger = 0;
+};
+
 class ChordDiagramKeyboard : public Component
 {
 public:
@@ -48,18 +54,19 @@ public:
     void updateChord(String newChord, StringArray newChordNotes);
     String getChord();
     void updateChordDiagram(int transpose, FLAT_SHARP_DISPLAY accidental);
-    void updateKeyOnColour(Colour newColour);
+    //void updateKeyOnColour(Colour newColour);
     void setDarkMode(bool isDarkMode);
     void allNotesOff();
 
 private:
-    OwnedArray<ChordDiagramNote> fretboard;
+    OwnedArray<ChordDiagramFret> fretboard;
     int numberOfFrets = 6;
     int numberOfStrings = 6;
     int baseFret = 1;
+    int baseFretDisplay = 1;
     String chord = "";
     String chordLabel = "";
-    StringArray chordNotes;
+    Array<int> chordNotes;
     Colour onColour = Colour(0xFFE5E5E5);
     bool darkMode = false;
 };

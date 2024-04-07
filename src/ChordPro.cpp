@@ -111,7 +111,7 @@ void ChordDiagramKeyboard::allNotesOff() {
 ChordDiagramFretboard::ChordDiagramFretboard () 
 {
     for (int i = 0; i < numberOfStrings; ++i) {
-        fretboard.add(new ChordDiagramNote());
+        fretboard.add(new ChordDiagramFret());
     }
 }
 
@@ -153,28 +153,31 @@ void ChordDiagramFretboard::paint(Graphics& g) {
     }
 
     // Base Fret
-    if (baseFret <= 1) {
+    if (this->baseFretDisplay <= 1) {
         int height = (int)(0.3 * fretHeight);
         g.fillRect(stringWidth, labelHeight + fretHeight - height, stringWidth * (numberOfStrings - 1) + 1, height);
     } else {
         g.setFont(Font(fretHeight));
-        auto bounds = Rectangle<int>(0, labelHeight + fretHeight, stringWidth, fretHeight);
-        g.drawFittedText(String(baseFret), bounds, Justification::centredLeft, 1, 1.0f);
+        auto bounds = Rectangle<int>(0, labelHeight + fretHeight, stringWidth - (fretHeight * 0.3f), fretHeight);
+        g.drawFittedText(String(this->baseFretDisplay), bounds, Justification::centredLeft, 1, 0.5f);
     }
 
     // Note markers
     x = stringWidth;
     float size = fretHeight * 0.6f;
     float adjustment = size * 0.5f;
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < fretboard.size(); ++i) {
         auto bounds = Rectangle<int>(x - (stringWidth * 0.5), labelHeight - (fretHeight * 0.3), stringWidth, fretHeight);
-        if (chordNotes[i] == "x" || chordNotes[i] == "0" || chordNotes[i] == "o") {
-            String character = chordNotes[i];
+       // if (chordNotes[i] == "x" || chordNotes[i] == "0" || chordNotes[i] == "o") {
+        if (fretboard[i]->fret <= 0) {
+            String character; // = chordNotes[i];
             Font font (Font(fretHeight, Font::plain).withTypefaceStyle ("Regular"));
-            if (character == "0" || character == "o") {
-                character = juce::String::charToString(0x25CB);
+            //if (character == "0" || character == "o") {
+            if (fretboard[i]->fret == 0) {
+                character = juce::String::charToString(0x25CB); // Circle
                 font.setHeight(fretHeight * 1.5f);
             } else {
+                character = "x";
                 font.setHeight(fretHeight * 1.2f);
             }
             #if JUCE_WINDOWS
@@ -183,7 +186,7 @@ void ChordDiagramFretboard::paint(Graphics& g) {
             g.setFont(font);
             g.drawFittedText(character, bounds, Justification::centred, 1, 1.0f);
         } else {
-            g.fillEllipse(x - adjustment, labelHeight + (fretHeight * 0.5) - adjustment + (fretHeight * chordNotes[i].getIntValue()), size, size);
+            g.fillEllipse(x - adjustment, labelHeight + (fretHeight * 0.5) - adjustment + (fretHeight * fretboard[i]->fret), size, size);
         }
         x += stringWidth;
     }
@@ -192,23 +195,33 @@ void ChordDiagramFretboard::paint(Graphics& g) {
 
 void ChordDiagramFretboard::updateChord(String newChord, StringArray newChordNotes) {
     this->chord = newChord;
+    // Convert to integers
+     for (int i = 0; i < numberOfStrings; ++i) {
+        if (newChordNotes[i].toLowerCase() == "x") {
+            int note = -1;
+            this->chordNotes.add(note);
+        } else {
+            this->chordNotes.add(newChordNotes[i].getIntValue());
+        }
+     }
     // Calculate base fret
     int base = 1;
     if (newChordNotes.size() == 7) {
-       base = chordNotes[6].getIntValue();
+       base = newChordNotes[6].getIntValue();
        //newChordNotes.remove(6);
     } else { // Infer from lowest fret (excluding open)
         int lowestFret = 99;
-        for (int i = 0; i < chordNotes.size(); ++i) {
-            if (newChordNotes[i] != "x") {
-                int fret = newChordNotes[i].getIntValue();
+        for (int i = 0; i < this->chordNotes.size(); ++i) {
+
+            if (this->chordNotes[i] >= 0) { // Ignore muted notes
+                int fret = this->chordNotes[i];
                 if (fret < lowestFret) lowestFret = fret;
-            }
+            } 
         }
         base = lowestFret < 3 ? 1 : lowestFret;
-        newChordNotes.add(String(base));
+        //newChordNotes.add(String(base));
     }
-    chordNotes.swapWith(newChordNotes);
+    //chordNotes.swapWith(newChordNotes);
     this->baseFret = base;
 }
 
@@ -217,29 +230,33 @@ String ChordDiagramFretboard::getChord() {
 }
 
 void ChordDiagramFretboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISPLAY accidental = original) {
-    StringArray chordParts = StringArray::fromTokens(chord,"/","");
-    String root = ChordPro::CP_GetRootNote(chordParts[0]);
-    int rootIndex = ChordPro::CP_GetRootNoteIndex(root);
-    allNotesOff();
-    /*
+    //StringArray chordParts = StringArray::fromTokens(chord,"/","");
+    //String root = ChordPro::CP_GetRootNote(chordParts[0]);
+    //int rootIndex = ChordPro::CP_GetRootNoteIndex(root);
+    //allNotesOff();
+    
+    // Calculate base fret to display
+    int openNoteAdjust = chordNotes.contains(0) ? 1 : 0; // Special handling of a chord with open notes
+    int transposedBaseFret = ((this->baseFret + transpose - openNoteAdjust - 1) % 11) + 1;
+    if (transposedBaseFret < 0) transposedBaseFret = transposedBaseFret + 12;
+    int fretAdjust = (transposedBaseFret - 1 ) % 2;
+
+    // Adjust fretted notes if necessary
     for (int i = 0; i < chordNotes.size(); ++i) {
-        int keyIndex = chordNotes[i].getIntValue() + rootIndex + transpose;
-        if (keyIndex >= fretboard.size()) {
-            keyIndex -= fretboard.size();
-        } else if (keyIndex < 0) {
-            keyIndex += fretboard.size();
-        }
-        fretboard[keyIndex]->noteOn = true;
+        int fretNumber = chordNotes[i] >= 0 ? chordNotes[i] + fretAdjust + openNoteAdjust : -1; // Don't adjust muted notes
+        fretboard[i]->fret = fretNumber;
     }
-    */
+
     this->chordLabel = ChordPro::CP_Transpose(chord, transpose, accidental);
-    this->baseFret = this->chordNotes[6].getIntValue() + transpose;
+    this->baseFretDisplay = transposedBaseFret - fretAdjust;
     repaint();
 }
 
+/*
 void ChordDiagramFretboard::updateKeyOnColour(Colour newColour) {
     onColour = newColour;
 }
+*/
 
 void ChordDiagramFretboard::setDarkMode(bool isDarkMode) {
     darkMode = isDarkMode;
@@ -248,7 +265,7 @@ void ChordDiagramFretboard::setDarkMode(bool isDarkMode) {
 
 void ChordDiagramFretboard::allNotesOff() {
     for (int i = 0; i < fretboard.size(); ++i) {
-        fretboard[i]->noteOn = false;
+        fretboard[i]->fret = 0;
     }
 }
 

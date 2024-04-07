@@ -881,13 +881,13 @@ public:
 	{
     int y = 0;
     int fontHeight = button.getHeight() * 0.9;
-    if (button.getName() == "Mono" || button.getName() == "Create") {
+    if (button.getName() == "Mono" || button.getName() == "Create" || button.getName() == "Save") {
       fontHeight = button.getHeight() * 0.5;
     } else if (button.getName() == "transposeSharp") {
       fontHeight = button.getHeight() * 0.75;
     }
 		Font font (fontHeight);
-    auto height = ((button.getName() == "Mono" || button.getName() == "Create") ? button.getHeight() : button.getHeight() * 0.85);
+    auto height = ((button.getName() == "Mono" || button.getName() == "Create" || button.getName() == "Save") ? button.getHeight() : button.getHeight() * 0.85);
 		if (button.getName() == "transposeFlat" || button.getName() == "transposeSharp") {
       font.setTypefaceName(Font::getDefaultMonospacedFontName());
       #if JUCE_WINDOWS
@@ -955,4 +955,15 @@ public:
       0, 0, label.getWidth(), label.getHeight(),
       Justification::centred, 2, 1.0f);
     }
+};
+
+class chordProEditorLookAndFeel : public LookAndFeel_V4 {
+public:
+  void drawLabel (Graphics& g, Label& label) {
+    g.setFont (Font (24.00f, Font::plain).withTypefaceStyle ("Regular").italicised());
+    g.setColour (Colours::white.withAlpha(0.6f));
+    g.drawFittedText (label.getText(),
+      0, 0, label.getWidth(), label.getHeight(),
+      Justification::centred, 2, 1.0f);
+  }
 };

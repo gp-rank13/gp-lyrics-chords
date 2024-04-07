@@ -169,10 +169,10 @@ void LibMain::OnStatusChanged(GPStatusType status) {
     switch (status) {
         case GPStatus_GigStartedLoading:
             isGigFileLoading = true;
-            consoleLog("Gig Started Loading");
+            //consoleLog("Gig Started Loading");
             break;
         case GPStatus_GigFinishedLoading:
-            consoleLog("Gig Finished Loading");
+            //consoleLog("Gig Finished Loading");
             isGigFileLoading = false;
             if (isFirstGigFileOpened) {
                 readPreferencesFile();
@@ -205,13 +205,16 @@ void LibMain::OnStatusChanged(GPStatusType status) {
         case GPStatus_VariationListModified:
             //consoleLog("Variation list changed");
             break;
+        case GPStatus_SaveRequest:
+            ExtensionWindow::savePreferences();
+            break;
         default:
             break;
     }
 }
 
 void LibMain::OnOpen() {
-    consoleLog("Opened");
+    //consoleLog("Opened");
     extensionPath = getPathToMe();
     ExtensionWindow::initialize();
 }
@@ -255,7 +258,7 @@ void LibMain::OnVariationChanged(int oldIndex, int newIndex) {
 void LibMain::OnSongChanged(int, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && inSetlistMode()) {
-        consoleLog("Song changed");
+        //consoleLog("Song changed");
         ExtensionWindow::updateButtonNames(getSongNames());
         ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);

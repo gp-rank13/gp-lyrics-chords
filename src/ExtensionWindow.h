@@ -22,13 +22,21 @@ public:
   MyDraggableComponent() { constrainer.setMinimumOnscreenAmounts (0xffffff, 0xffffff, 0xffffff, 0xffffff); }
   ComponentDragger dragger;
   ComponentBoundsConstrainer constrainer;
+
   void mouseDown (const MouseEvent& e) override
   {
       dragger.startDraggingComponent (this, e);
   }
+
+  void mouseUp (const MouseEvent& ) override
+  {
+      dragging = false;
+  }
+
   void mouseDrag (const MouseEvent& e) override
   {
       dragger.dragComponent (this, e, &constrainer);
+      dragging = true;
   }
   void paint(Graphics& g) override 
   { 
@@ -41,13 +49,20 @@ public:
       g.fillRect(area.withWidth(5)); // Override displayed width of separator
   }
 
-  void mouseEnter (const MouseEvent&) override {
+  void mouseEnter (const MouseEvent& ) override {
       repaint();
   }
 
-  void mouseExit (const MouseEvent&) override {
+  void mouseExit (const MouseEvent& ) override {
       repaint();
   }
+
+  bool isDragging() {
+    return dragging;
+  }
+
+private:
+   bool dragging = false;
 };
 
 class ChordDiagramKeys : public Component
@@ -92,6 +107,41 @@ class ChordProContainer : public Component
 {
 public:
   void mouseDown (const MouseEvent& e) override;
+
+};
+
+class ChordProEditorContainer : public Component
+{
+public:
+  void paint(Graphics& g) override {
+    g.fillAll (backgroundColour);
+    /*
+    g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
+    g.setColour (Colours::black);
+    g.drawFittedText ("Editor",
+      15, 0, getWidth(), HEADER_HEIGHT,
+      Justification::left, 1, 1.0f);
+    */
+  };
+  
+  void setBackgroundColour(Colour newColour) {
+    backgroundColour = newColour;
+    repaint();
+  }
+
+private:
+  Colour backgroundColour = viewPortBackground;
+
+};
+
+class ChordProEditor : public TextEditor,
+                       public TextEditor::Listener
+{
+public:
+  ChordProEditor() {
+    addListener(this);
+  }
+  virtual void textEditorTextChanged(TextEditor& editor) override;
 
 };
 
@@ -393,6 +443,7 @@ public:
   void static displayTransposeContainer(bool display);
   void static displaySearchContainer(bool display);
   void static displayPreferencesContainer(bool display);
+  void static displayEditorContainer(bool display);
   void static logToGP(std::string text);
   void static songSearch(String searchCharacter, bool append);
   void static songSearchBackspace();
@@ -431,11 +482,12 @@ public:
   void static chordProScrollToSongPart(std::string text);
   void chordProDisplayGUI(bool display);
   void chordProSetColors();
+  void chordProSetImageDarkMode(bool darkMode);
   //void chordProSetFontSize(float newSize);
   //void chordProImagesCheckAndAdd(int index);
   //void chordProDiagramKeyboardCheckAndAdd(int index);
   void addChordProLine(int atIndex = -1, String name = "");
-  void addChordProImage();
+  bool addChordProImage(String path);
   void addChordProDiagramKeyboard();
   void addChordProDiagramFretboard();
   int chordProGetVisibleImageCount();
@@ -443,10 +495,12 @@ public:
   void static chordProCreateInvertedImages();
   void static saveWindowState();
   void static savePreferences();
+  void static saveChordProFile();
   void static restartWindowTimer();
 
   static ExtensionWindow* extension;
   MyDraggableComponent draggableResizer;
+  MyDraggableComponent draggableResizerEditor;
   WindowChangeTimer windowTimer;
   SharedResourcePointer<buttonLookAndFeel> buttonsLnF;
   SharedResourcePointer<gridButtonLookAndFeel> gridButtonsLnF;
@@ -472,6 +526,7 @@ public:
   SharedResourcePointer<setlistListButtonLookAndFeel> setlistListButtonLnF;
   SharedResourcePointer<noSongLabelLookAndFeel> noSongLabelLnF;
   SharedResourcePointer<noChordProLabelLookAndFeel> noChordProLabelLnF;
+  SharedResourcePointer<chordProEditorLookAndFeel> chordProEditorLnF;
   bool prefsLoaded = false;
 
  private:
@@ -498,6 +553,7 @@ public:
   RightViewPort viewportRight;
   Component container;
   Component containerRight;
+  ChordProEditorContainer containerEditor;
   PreferencesContainer preferencesContainer;
   ChordProContainer chordProContainer;
   SetlistContainer setlistContainer;
@@ -509,6 +565,7 @@ public:
   PopOver missingImageContainer;
   PopOver transposeContainer;
   PopOver searchContainer;
+  PopOver editorHeaderContainer;
   OwnedArray<TextButton> buttons;
   OwnedArray<TextButton> subButtons;
   OwnedArray<TextButton> setlistButtons;
@@ -550,6 +607,7 @@ public:
   std::unique_ptr<Label> noSongsLabel;
   std::unique_ptr<Label> noChordProLabel;
   std::unique_ptr<Label> searchBox;
+  std::unique_ptr<Label> editorLabel;
   std::unique_ptr<TextButton> btnCurrent;
   std::unique_ptr<TextButton> btnPrev;
   std::unique_ptr<TextButton> btnNext;
@@ -563,6 +621,7 @@ public:
   std::unique_ptr<TextButton> transposeFlat; 
   std::unique_ptr<TextButton> setlistButton;
   std::unique_ptr<TextButton> createInvertedImage;
+  std::unique_ptr<TextButton> editorSaveButton;
   //std::unique_ptr<ColourChangeButton> testButton;
   std::unique_ptr<DynamicObject> preferences;
   std::unique_ptr<DynamicObject> preferencesChordProColors;
@@ -578,10 +637,14 @@ public:
   std::unique_ptr<IconButton> columnsOneButton;
   std::unique_ptr<IconButton> fitWidthButton;
   std::unique_ptr<IconButton> fitHeightButton;
-  std::unique_ptr<IconButton> closeButton;
+  std::unique_ptr<IconButton> preferencesCloseButton;
   std::unique_ptr<IconButton> preferencesButton;
   std::unique_ptr<IconButton> transposeButton;
   std::unique_ptr<IconButton> searchButton;
+  std::unique_ptr<IconButton> editButton;
+  std::unique_ptr<IconButton> editorCloseButton;
+  std::unique_ptr<ChordProEditor> chordProEditor;
+
   Image menuIcon;
   ImageComponent menuIconComponent;
 
