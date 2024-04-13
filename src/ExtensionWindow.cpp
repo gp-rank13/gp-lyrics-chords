@@ -1438,6 +1438,7 @@ void ExtensionWindow::selectButton(int index) {
 
 void ExtensionWindow::selectSongForCurrentButton() {
     if (lib == nullptr) return;
+        //extension->log("Select Song for Current Button");
         int buttonIndex = extension->getButtonSelected();
         if (!lib->inSetlistMode()) lib->switchToSetlistView();
         lib->switchToSong(buttonIndex, 0);

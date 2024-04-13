@@ -12,8 +12,8 @@ namespace gigperformer {
    }
 }
 
-bool isGigFileLoading = true;
-bool isFirstGigFileOpened = true;
+bool isGigFileLoading = false;
+bool isFirstGigFileOpened = false;
 std::string extensionPath;
 
 int LibMain::GetMenuCount()
@@ -174,9 +174,9 @@ void LibMain::OnStatusChanged(GPStatusType status) {
         case GPStatus_GigFinishedLoading:
             //consoleLog("Gig Finished Loading");
             isGigFileLoading = false;
-            if (isFirstGigFileOpened) {
+            if (!isFirstGigFileOpened) {
                 readPreferencesFile();
-                isFirstGigFileOpened = false;
+                isFirstGigFileOpened = true;
             }
             //readPreferencesFile();
             ExtensionWindow::updateButtonNames(getSongNames());
@@ -304,7 +304,8 @@ void LibMain::OnSetlistChanged(const std::string&) {
 }
 
 void LibMain::OnModeChanged(int mode) {
-    if (isGigFileLoading) return;
+    //consoleLog("Mode changed");
+    if (isGigFileLoading || !isFirstGigFileOpened) return;
     //readPreferencesFile("colors");
     //if (mode == GP_SetlistMode) setWidgetValue(WIDGET_CP_SCROLL, 0.0);
     //ExtensionWindow::refreshUI();
