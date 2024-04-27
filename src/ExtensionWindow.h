@@ -7,6 +7,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "Constants.h"
+#include "Version.h"
 #include "ChordPro.h"
 #include "LookAndFeel.h"
 #include "Timer.h"
@@ -75,17 +76,12 @@ public:
       g.setColour(Colour(0xFFF0F0F0));
       auto bounds = getLocalBounds();
       g.drawFittedText(label, bounds.withHeight(newY), Justification::centred, 1, 1.0f);
-      //g.setColour(Colours::red);
-      //g.fillRect(0, newY, getWidth(), getHeight() - newY);//.withTrimmedTop(getHeight() / 4));
-      //g.fillAll(Colours::red);
       g.setColour(Colour(0xFFD0D0D0));
       int w = getWidth() / 13;
       int pad = getHeight() * 0.05;
       for (int i = 0; i < 14; ++i) {
         g.drawRect(i * (w - 1), newY + pad, w, getHeight() - newY - pad);
       }
-        
-
   }
 
   void updateLabel(String newLabel) {
@@ -115,13 +111,6 @@ class ChordProEditorContainer : public Component
 public:
   void paint(Graphics& g) override {
     g.fillAll (backgroundColour);
-    /*
-    g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
-    g.setColour (Colours::black);
-    g.drawFittedText ("Editor",
-      15, 0, getWidth(), HEADER_HEIGHT,
-      Justification::left, 1, 1.0f);
-    */
   };
   
   void setBackgroundColour(Colour newColour) {
@@ -167,7 +156,6 @@ class PreferencesContainer : public Component
 {
 public:
   void paint(Graphics& g) override {
-    //g.fillAll (Colour (0xFF1A1A1A));
     int indent = 50;
     int prefIndent = 100;
     int colorIndent = 140;
@@ -175,7 +163,7 @@ public:
     int subtitleHeight = 40;
     int prefHeight = 35;
     int runningY = titleHeight;
-
+    g.fillAll(Colour::fromString(BACKGROUND_COLOR));
     g.setColour(Colours::white);
     g.setFont (Font (40.0f, Font::plain).withTypefaceStyle ("Regular"));
     g.drawFittedText ("Preferences",
@@ -258,8 +246,25 @@ public:
     g.drawFittedText ("Dark mode lyric color",
       colorIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-  } ;
 
+    runningY += titleHeight * 2;
+    g.setColour(Colour::fromString(HEADER_SONG_COLOR));
+    g.fillRect(0, runningY, getWidth(), 5);
+
+    runningY += prefHeight;
+
+    g.setColour(Colour (0xFFD0D0D0));
+    g.setFont (Font (16.0f, Font::plain).withTypefaceStyle ("Regular").italicised());
+    g.drawFittedText ("Version: " + PROJECT_VERSION,
+      indent, runningY, getWidth(), prefHeight * 0.8f,
+      Justification::left, 1, 1.0f);
+
+    runningY += prefHeight * 0.8f;
+
+    g.drawFittedText ("Build Date: " + PROJECT_BUILD_DATE,
+      indent, runningY, getWidth(), prefHeight * 0.8f,
+      Justification::left, 1, 1.0f);
+  } ;
 };
 
 class RightViewPort : public Viewport
@@ -268,9 +273,6 @@ public:
   void paint(Graphics& g) override {
     g.fillAll (viewPortBackground);
   } ;
-
-  //void mouseDown (const MouseEvent& e) override;
-
 };
 
 class FloatingViewPort : public Viewport
@@ -325,13 +327,6 @@ public:
     }
 
     void changeListenerCallback (ChangeBroadcaster* source) override;
-    //void focusLost (FocusChangeType cause) override;
-    /*
-    {
-        if (ColourSelector* cs = dynamic_cast<ColourSelector*> (source))
-            colourValue = cs->getCurrentColour().toString();
-    }
-    */
 
 private:
     Value colourValue;
@@ -357,7 +352,6 @@ class MyDocumentWindow : public DocumentWindow
   }
   virtual ~MyDocumentWindow() { }
   virtual void closeButtonPressed () override;
-  virtual void moved () override;
   virtual bool keyPressed(const KeyPress& key) override;
 
 };
@@ -370,8 +364,8 @@ public:
   ExtensionWindow ();
   virtual ~ExtensionWindow() override;
   void closeButtonPressed();
-  void static initialize(); // Call this to show the component
-  void static finalize(); // Call this when library is about to be unloaded to free resources
+  void static initialize();
+  void static finalize();
   void paint (Graphics& g) override;
   void resized() override;
   void buttonClicked (Button* buttonThatWasClicked) override;
@@ -388,13 +382,14 @@ public:
   void static updateSetlistButtons(std::vector<std::string> buttonNames);
   bool static isButtonSelected(int index);
   int static getButtonSelected();
+  int static getSubButtonSelected();
   int static getVisibleButtonCount();
   int static getVisibleSubButtonCount();
   void static incrementButton(int increment);
+  void static incrementSubButton(int increment);
   bool static getDisplayVariationForSongPartStatus();
   void static selectButton(int index);
   void static selectSetlistButton(int index);
-  //void static updatePrevCurrNext(int index);
   bool static isSubButtonSelected(int index);
   bool static isSubButtonsCollapsed(); 
   void static selectSubButton(int index);
@@ -422,11 +417,8 @@ public:
   void static toggleLeftMarginLabels();
   void static toggleDarkMode();
   void static toggleSmallChordFont();
-  //void static displayRackspaceVariationInSetlistMode(bool display);
-  //void static toggleRackspaceVariationInSetlistMode();
   String buttonName(int index);
   void static displayWindow(bool display);
-  void static displayExpandedWindow(bool display);
   void static checkSongListPosition();
   void static scrollWindow(double value);
   void static setTitleBarName(const String& name);
@@ -450,27 +442,21 @@ public:
   void static songSearchSelect();
   void static clearSearch();
   void static displaySearchCarat(); 
-  //void static exitSearch();
-  //void static displaySearch(bool display);
   bool static isActiveSearch();
   void static filterButtons(String text);
 
 
   Image static getWindowIcon();
-  void mouseDrag ( const MouseEvent& /*e*/) override
+  void mouseDrag ( const MouseEvent& ) override
     {
         resized();
     }
   
   void changeListenerCallback (ChangeBroadcaster* source) override
     {
-        //if (juce::ColourSelector* cs = dynamic_cast<juce::ColourSelector*> (source))
-        //    colourValue = cs->getCurrentColour().toString();
       if (ColourSelector* cs = dynamic_cast <ColourSelector*> (source))
       {
           const String& name = cs->getName();
-          logToGP(name.toStdString());
-          
       }
     }
   
@@ -483,20 +469,18 @@ public:
   void chordProDisplayGUI(bool display);
   void chordProSetColors();
   void chordProSetImageDarkMode(bool darkMode);
-  //void chordProSetFontSize(float newSize);
-  //void chordProImagesCheckAndAdd(int index);
-  //void chordProDiagramKeyboardCheckAndAdd(int index);
+  void static chordProEditorUpdate();
   void addChordProLine(int atIndex = -1, String name = "");
   bool addChordProImage(String path);
   void addChordProDiagramKeyboard();
   void addChordProDiagramFretboard();
   int chordProGetVisibleImageCount();
-  //int chordProDiagramKeysVisibleCount();
   void static chordProCreateInvertedImages();
   void static saveWindowState();
   void static savePreferences();
   void static saveChordProFile();
   void static restartWindowTimer();
+  void static readPreferencesFile();
 
   static ExtensionWindow* extension;
   MyDraggableComponent draggableResizer;
@@ -528,14 +512,12 @@ public:
   SharedResourcePointer<noChordProLabelLookAndFeel> noChordProLabelLnF;
   SharedResourcePointer<chordProEditorLookAndFeel> chordProEditorLnF;
   bool prefsLoaded = false;
+  int editorTextChangedCount = 0;
 
  private:
   void log(String text);
-
-  void chordProRefresh();
   void chordProReset();
   void chordProUpdateDiagramColors();
-  void colorSelectorHelper(juce::StringRef name, juce::Colour currentColor, Rectangle<int> bounds);
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
@@ -545,8 +527,7 @@ public:
   void static setSongPanelToFloating(bool isFloating);
   void updatePreferencesWindow();
   void updatePreferencesColors();
-
-
+  
   std::unique_ptr<MyDocumentWindow> extensionWindow;
   TooltipWindow tooltipWindow;
   Viewport viewport;
@@ -560,7 +541,6 @@ public:
   SetlistHeaderContainer setlistHeaderContainer;
   std::unique_ptr<DrawableButton> prefToggle;
   FloatingViewPort floatingViewport;
-
   PopOver fontButtonContainer;
   PopOver missingImageContainer;
   PopOver transposeContainer;
@@ -572,9 +552,7 @@ public:
   OwnedArray<Label> chordProLines;
   OwnedArray<ImageComponent> chordProImages;
   OwnedArray<DrawableButton> prefButtons;
-  //OwnedArray<Label> prefColorLabels;
   OwnedArray<ColourChangeButton> prefColorButtons;
-  //OwnedArray<ChordDiagramKeys> chordProDiagramKeyboard;
   OwnedArray<ChordDiagramKeyboard> chordProDiagramKeyboard;
   OwnedArray<ChordDiagramFretboard> chordProDiagramFretboard;
   StringPairArray buttonColors;
@@ -589,14 +567,16 @@ public:
   bool chordProForCurrentSong = false;
   bool chordProImagesOnly = false;
   bool chordProTwoColumns = false;
-  //bool chordProDarkMode = false;
   bool fitHeight = false;
   bool pendingDisplayWindow = false;
   bool windowPinned = false;
   bool windowFullscreen = false;
   std::unique_ptr<int> switchImmediately;
   int prevButtonSelected = 0;
+  bool editorTextEdited = false;
+  
   String searchText;
+  String chordProTextOriginal;
   std::unique_ptr<Label> highlight;
   std::unique_ptr<Label> header;
   std::unique_ptr<Label> clock;
@@ -622,7 +602,6 @@ public:
   std::unique_ptr<TextButton> setlistButton;
   std::unique_ptr<TextButton> createInvertedImage;
   std::unique_ptr<TextButton> editorSaveButton;
-  //std::unique_ptr<ColourChangeButton> testButton;
   std::unique_ptr<DynamicObject> preferences;
   std::unique_ptr<DynamicObject> preferencesChordProColors;
   std::unique_ptr<IconButton> sidePanelOpenButton;
@@ -644,10 +623,8 @@ public:
   std::unique_ptr<IconButton> editButton;
   std::unique_ptr<IconButton> editorCloseButton;
   std::unique_ptr<ChordProEditor> chordProEditor;
-
   Image menuIcon;
   ImageComponent menuIconComponent;
-
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExtensionWindow)
 };

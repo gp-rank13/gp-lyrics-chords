@@ -12,10 +12,16 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Let's choose a name and version for the extension. Change the name to your
 # liking. The version should be a string like "1.0".
 set(PROJECT_NAME "GPLyricsChords") # Change this to your liking
-project(${PROJECT_NAME} VERSION 1.6)
+set (PROJECT_VERSION "1.0.11")
+set (PROJECT_TITLE "GP Lyrics/Chords")
+set (PROJECT_DESCR "Lyrics and Chords Viewer")
+string(TIMESTAMP TODAY "%d/%m/%Y")
+set (PROJECT_BUILD_DATE ${TODAY})
+project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/dependencies.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/juce-shared-library.cmake")
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/Version.h @ONLY)
 
 # Define our library including sources, include directories and dependencies
 juce_add_shared_library(${PROJECT_NAME})

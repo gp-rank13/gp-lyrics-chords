@@ -17,19 +17,18 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
     auto bounds = getLocalBounds();
     int labelHeight = getHeight() * 0.35;
     int keyboardHeight = getHeight() * 0.65;
+
     g.setFont(Font(labelHeight * 0.8f));
     g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
-
     g.drawFittedText(chordLabel, bounds.withHeight(labelHeight), Justification::centred, 1, 1.0f);
     g.setColour(darkMode ? Colour(0xFFD0D0D0) : Colour(0xFF1F1F1F));
-    ///g.drawRect(bounds.withHeight(labelHeight));
-    //int pad = getHeight() * 0.05;
+   
     int x = 0;
     int whiteWidth = bounds.getWidth() / (numberOfWhiteKeys * octaves);
     int blackWidth = whiteWidth * 0.6;
     int blackToWhiteX = blackWidth / 2;
     int whiteToBlackX = whiteWidth - (blackWidth / 2);
-    //g.drawRect(0,0,whiteWidth*numberOfWhiteKeys * octaves, labelHeight);
+
     // White keys
     for (int i = 0; i < keyboard.size(); ++i) {
         int key = i % 12;
@@ -43,8 +42,6 @@ void ChordDiagramKeyboard::paint(Graphics& g) {
                 g.fillRect(x + 1, labelHeight + 1, whiteWidth - 2, keyboardHeight - 2);
             }
             x += (key == 4 || key == 11 ? whiteWidth : whiteToBlackX);
-            //x += (key == 4 || key == 11 ? whiteWidth - 1 : whiteWidth * 0.7 - 1);
-            //x += whiteWidth;
         }
     }
 
@@ -116,14 +113,11 @@ ChordDiagramFretboard::ChordDiagramFretboard ()
 }
 
 void ChordDiagramFretboard::paint(Graphics& g) {
-    //auto bounds = getLocalBounds();
     int labelHeight = getHeight() * 0.24;
-    
     int fretboardHeight = getHeight() * 0.75;
-    //int leftMargin = 
-    int fretboardWidth = getWidth() * 0.98; //fretboardHeight;
+    int fretboardWidth = getWidth() * 0.98;
     int fretHeight = fretboardHeight / (numberOfFrets - 1);
-    int stringWidth = fretboardWidth / (numberOfStrings + 1); //fretHeight;
+    int stringWidth = fretboardWidth / (numberOfStrings + 1);
     auto labelBounds = Rectangle<int>(0, 0, getWidth(), labelHeight);
 
     g.setFont(Font(labelHeight * 0.86f));
@@ -131,25 +125,18 @@ void ChordDiagramFretboard::paint(Graphics& g) {
 
     // Chord label
     g.drawFittedText(chordLabel, labelBounds, Justification::centredBottom, 1, 1.0f);
-    //g.setColour(darkMode ? Colour(0xFFD0D0D0) : Colour(0xFF1F1F1F));
     g.setColour(darkMode ? Colour(0xFFF0F0F0) : Colour(0xFF0F0F0F));
 
-    //g.drawRect(bounds);
-    //int pad = getHeight() * 0.05;
-    int x = stringWidth;
-
-
     // Strings
+    int x = stringWidth;
     for (int i = 0; i < numberOfStrings; ++i) {
         g.fillRect(x, labelHeight + fretHeight, 1, fretHeight * (numberOfFrets - 2));
         x += stringWidth;
     }
 
     // Frets
-    //int y = labelHeight;
     for (int i = 1; i < numberOfFrets; ++i) {
         g.fillRect(stringWidth, labelHeight + (i * fretHeight), stringWidth * (numberOfStrings - 1), 1);
-        //y += fretHeight;
     }
 
     // Base Fret
@@ -168,11 +155,9 @@ void ChordDiagramFretboard::paint(Graphics& g) {
     float adjustment = size * 0.5f;
     for (int i = 0; i < fretboard.size(); ++i) {
         auto bounds = Rectangle<int>(x - (stringWidth * 0.5), labelHeight - (fretHeight * 0.3), stringWidth, fretHeight);
-       // if (chordNotes[i] == "x" || chordNotes[i] == "0" || chordNotes[i] == "o") {
         if (fretboard[i]->fret <= 0) {
-            String character; // = chordNotes[i];
+            String character;
             Font font (Font(fretHeight, Font::plain).withTypefaceStyle ("Regular"));
-            //if (character == "0" || character == "o") {
             if (fretboard[i]->fret == 0) {
                 character = juce::String::charToString(0x25CB); // Circle
                 font.setHeight(fretHeight * 1.5f);
@@ -190,7 +175,6 @@ void ChordDiagramFretboard::paint(Graphics& g) {
         }
         x += stringWidth;
     }
-
 }
 
 void ChordDiagramFretboard::updateChord(String newChord, StringArray newChordNotes) {
@@ -208,20 +192,16 @@ void ChordDiagramFretboard::updateChord(String newChord, StringArray newChordNot
     int base = 1;
     if (newChordNotes.size() == 7) {
        base = newChordNotes[6].getIntValue();
-       //newChordNotes.remove(6);
     } else { // Infer from lowest fret (excluding open)
         int lowestFret = 99;
         for (int i = 0; i < this->chordNotes.size(); ++i) {
-
             if (this->chordNotes[i] >= 0) { // Ignore muted notes
                 int fret = this->chordNotes[i];
                 if (fret < lowestFret) lowestFret = fret;
             } 
         }
         base = lowestFret < 3 ? 1 : lowestFret;
-        //newChordNotes.add(String(base));
     }
-    //chordNotes.swapWith(newChordNotes);
     this->baseFret = base;
 }
 
@@ -229,12 +209,7 @@ String ChordDiagramFretboard::getChord() {
     return chord;
 }
 
-void ChordDiagramFretboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISPLAY accidental = original) {
-    //StringArray chordParts = StringArray::fromTokens(chord,"/","");
-    //String root = ChordPro::CP_GetRootNote(chordParts[0]);
-    //int rootIndex = ChordPro::CP_GetRootNoteIndex(root);
-    //allNotesOff();
-    
+void ChordDiagramFretboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISPLAY accidental = original) {    
     // Calculate base fret to display
     int openNoteAdjust = chordNotes.contains(0) ? 1 : 0; // Special handling of a chord with open notes
     int transposedBaseFret = ((this->baseFret + transpose - openNoteAdjust - 1) % 11) + 1;
@@ -252,12 +227,6 @@ void ChordDiagramFretboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DIS
     repaint();
 }
 
-/*
-void ChordDiagramFretboard::updateKeyOnColour(Colour newColour) {
-    onColour = newColour;
-}
-*/
-
 void ChordDiagramFretboard::setDarkMode(bool isDarkMode) {
     darkMode = isDarkMode;
     repaint();
@@ -270,66 +239,27 @@ void ChordDiagramFretboard::allNotesOff() {
 }
 
 String ChordPro::CP_Transpose(String chord, int transpose, FLAT_SHARP_DISPLAY accidental) {
-    // Split out bass note 
-    StringArray chordParts = StringArray::fromTokens(chord,"/","");
-    for (int i = 0; i < chordParts.size(); ++i) {
-        String root = CP_GetRootNote(chordParts[i]);
-        int rootIndex = CP_GetRootNoteIndex(root);
-        int newIndex = -1;
-        
-        if (rootIndex >= 0) {
-            newIndex = rootIndex + transpose;
-            if (newIndex < 0) {
-                newIndex += (NOTES_SHARP.size());
-            } else if (newIndex > NOTES_SHARP.size() - 1) {
-                newIndex -= NOTES_SHARP.size();
-            }
-            chordParts.set(i, chordParts[i].replace(root, accidental == sharp ? NOTES_SHARP[newIndex] : NOTES_FLAT[newIndex]));
-        }
-    }
-
-       /*
-        if (chordParts[i].substring(1,2) == "#") {
-            root = chordParts[i].substring(0,2);
-            int rootIndex = NOTES_SHARP.indexOf(root);
+    if (transpose != 0) {
+        // Split out bass note 
+        StringArray chordParts = StringArray::fromTokens(chord,"/","");
+        // Transpose
+        for (int i = 0; i < chordParts.size(); ++i) {
+            String root = CP_GetRootNote(chordParts[i]);
+            int rootIndex = CP_GetRootNoteIndex(root);
+            int newIndex = -1;
+            
             if (rootIndex >= 0) {
                 newIndex = rootIndex + transpose;
                 if (newIndex < 0) {
                     newIndex += (NOTES_SHARP.size());
                 } else if (newIndex > NOTES_SHARP.size() - 1) {
                     newIndex -= NOTES_SHARP.size();
-                }
-                chordParts.set(i, chordParts[i].replace(root, accidental == flat ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex]));
-            }
-        } //else if (chordParts[i].contains("b")) {
-           else if (chordParts[i].substring(1,2) == "b") {
-            root = chordParts[i].substring(0,2);
-            int rootIndex = NOTES_FLAT.indexOf(root);
-            if (rootIndex >= 0) {
-                newIndex = rootIndex + transpose;
-                if (newIndex < 0) {
-                    newIndex += (NOTES_FLAT.size());
-                } else if (newIndex > NOTES_FLAT.size() - 1) {
-                    newIndex -= NOTES_FLAT.size();
                 }
                 chordParts.set(i, chordParts[i].replace(root, accidental == sharp ? NOTES_SHARP[newIndex] : NOTES_FLAT[newIndex]));
             }
-        } else {
-            root = chordParts[i].substring(0,1);
-            int rootIndex = NOTES_SHARP.indexOf(root);
-            if (rootIndex >= 0) {
-                newIndex = rootIndex + transpose;
-                if (newIndex < 0) {
-                    newIndex += (NOTES_SHARP.size());
-                } else if (newIndex > NOTES_SHARP.size() - 1) {
-                    newIndex -= NOTES_SHARP.size();
-                }
-                chordParts.set(i, chordParts[i].replace(root, accidental == flat ? NOTES_FLAT[newIndex] : NOTES_SHARP[newIndex]));
-            }
         }
-        */
-    
-    chord = chordParts.joinIntoString("/");
+        chord = chordParts.joinIntoString("/");
+    }
     return chord;
 } 
 
@@ -345,6 +275,11 @@ String ChordPro::CP_GetRootNote(String chord) {
 
 int ChordPro::CP_GetRootNoteIndex(String rootNote) {
     int rootIndex = -1;
+    // Substitute any enharmonic equivalents
+    int enharmonicIndex = NOTES_ENHARMONIC.indexOf(rootNote);
+    if (enharmonicIndex >= 0) {
+        rootNote = NOTES_ENHARMONIC_EQUIVALENT[enharmonicIndex];
+    }
     if (rootNote.substring(1,2) == "#") {
         rootIndex = NOTES_SHARP.indexOf(rootNote);
     } else {

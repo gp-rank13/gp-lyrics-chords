@@ -16,8 +16,6 @@ inline char PATH_SEPARATOR() {
 }
 
 // Window title bar and header labels
-const std::string RACKSPACE_TITLE = "Rackspaces";
-const std::string RACKSPACE_WINDOW_TITLE = "Rackspace Selector";
 const std::string SONG_TITLE = "Songs";
 const std::string SONG_WINDOW_TITLE = "GP Lyrics/Chords";
 
@@ -31,7 +29,6 @@ const std::string WIDGET_CP_UP = "GPLC_UP";
 const std::string WIDGET_CP_DOWN = "GPLC_DOWN";
 
 // List of menu items
-//const std::vector<std::string> menuNames = { "Show Window", "Toggle Zero-Based Numbers", "Toggle Large Scroll Area", "Toggle Thick Borders", "Toggle Variations in Setlist Mode", "Toggle Left Margin Labels", "Preferences..."};//, "Toggle Lock to Setlist Mode"};
 const std::vector<std::string> menuNames = { "Show Window", "Preferences..."};
 
 // Preferences file
@@ -67,7 +64,6 @@ const float CP_DEFAULT_FONT_SIZE = 0.7f;
 const float CP_MIN_FONT_SIZE = 0.4f;
 const float CP_MAX_FONT_SIZE = 1.6f;
 const float CP_FONT_STEP_SIZE = 0.1f;
-//const int CP_DEFAULT_IMAGES = 10;
 const int CP_TOP_PADDING = 20;
 const int CP_KEYBOARD_HEIGHT = 120;
 const int CP_KEYBOARD_WIDTH = 220;
@@ -80,11 +76,11 @@ const int CP_EXPANDED_LEFT_MARGIN = 250;
 const int CP_EDITOR_DEFAULT_X = 600;
 
 const juce::String CP_LIGHT_LYRIC_COLOR = "FF000000";
-const juce::String CP_LIGHT_CHORD_COLOR = "FF1496F1"; //"FF1E80F0"; //"FF6A9EBC"; //FFFC0000";
+const juce::String CP_LIGHT_CHORD_COLOR = "FF1496F1"; 
 const juce::String CP_LIGHT_BACKGROUND_COLOR = "FFFFFFFF";
 const juce::String CP_LIGHT_IMAGES_BACKGROUND_COLOR = "FFF0F0F0";
 const juce::String CP_DARK_LYRIC_COLOR = "FFFFFFFF";
-const juce::String CP_DARK_CHORD_COLOR = "FF1496F1";  //"FFFDFB00";
+const juce::String CP_DARK_CHORD_COLOR = "FF1496F1";
 const juce::String CP_DARK_BACKGROUND_COLOR = "FF000000";
 const juce::String CP_DARK_IMAGES_BACKGROUND_COLOR = BACKGROUND_COLOR;
 
@@ -94,9 +90,9 @@ const juce::String CP_DARK_MODE_IMAGE_PROCESSING = "Creating image(s)...";
 
 const juce::StringArray NOTES_SHARP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const juce::StringArray NOTES_FLAT = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
-const std::vector<std::string> SHARPS = {"C#", "D#", "F#", "G#", "A#"};
-const std::vector<std::string> FLATS = {"Db", "Eb", "Gb", "Ab", "Bb"};
-const std::vector<std::string> SHARPS_FLATS = {"C#", "D#", "F#", "G#", "A#", "Db", "Eb", "Gb", "Ab", "Bb"};
+const juce::StringArray NOTES_ENHARMONIC = {"E#", "B#", "Cb", "Fb"};
+const juce::StringArray NOTES_ENHARMONIC_EQUIVALENT = {"F", "C", "B", "E"};
+
 typedef enum FLAT_SHARP_DISPLAY {original, flat, sharp} FLAT_SHARP_DISPLAY;
 
 // Timer callback defaults

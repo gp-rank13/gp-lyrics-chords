@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Constants.h"
-//#include "ChordPro.h"
 
 using namespace juce;
 
@@ -17,7 +16,6 @@ extern bool chordProDarkMode;
 extern int chordProTranspose;
 extern FLAT_SHARP_DISPLAY chordProTransposeDisplay;
 extern bool searchCaratOn;
-//extern Colour headerRackspaceColor;
 extern Colour headerSongColor;
 
 class buttonLookAndFeel : public LookAndFeel_V4 {
@@ -153,7 +151,6 @@ public:
 class subButtonHighlightLookAndFeel : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    //auto labelArea = label.getLocalBounds().toFloat();
     auto highlightArea = label.getLocalBounds().toFloat();
     auto padding = (float)label.getProperties()["buttonHeight"] * 0.3;
     float cornerSize = 5.f;
@@ -199,14 +196,13 @@ public:
     const auto buttonHeight = (double) button.getHeight();
     const String buttonText = button.getButtonText();
     const auto yIndent = buttonHeight * 0.1;
-		const auto leftIndent = 25; //buttonWidth > 160 ? yIndent * 2 : 5;
+		const auto leftIndent = 25;
     auto availableWidth = buttonWidth - leftIndent - 30;
     const int rows = 1;
 
     // Button Name
     Font font2 (button.getHeight() * 0.38f);
     g.setFont (font2);
-    //g.setColour (button.getToggleState () ? Colours::white : Colour(0xffc5c5c5));
     g.setColour(Colours::white);
     g.drawFittedText (buttonText,
       leftIndent, yIndent, availableWidth, buttonHeight - yIndent * 2,
@@ -216,7 +212,6 @@ public:
   void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour&,
                               bool isButtonHighlighted, bool isButtonDown) {
     auto buttonArea = button.getLocalBounds().toFloat();
-    //float borderSize = buttonArea.getHeight() * ((button.getProperties()["thickBorder"]) ? 0.08 : 0.04);
     float cornerSize = buttonArea.getHeight() * 0.08;
     Colour buttonColor = Colour::fromString(button.getProperties()["colour"].toString());
 
@@ -247,14 +242,13 @@ public:
     const auto buttonHeight = (double) button.getHeight();
     const String buttonText = button.getButtonText();
     const auto yIndent = buttonHeight * 0.1;
-		const auto leftIndent = 25; //buttonWidth > 160 ? yIndent * 2 : 5;
+		const auto leftIndent = 25;
     auto availableWidth = buttonWidth - leftIndent - 30;
     const int rows = 1;
 
     // Button Name
     Font font2 (button.getHeight() * 0.38f);
     g.setFont (font2);
-    //g.setColour (button.getToggleState () ? Colours::white : Colour(0xffc5c5c5));
     g.setColour(Colours::white);
     g.drawFittedText (buttonText,
       leftIndent, yIndent, availableWidth, buttonHeight - yIndent * 2,
@@ -264,7 +258,6 @@ public:
   void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour&,
                               bool isButtonHighlighted, bool isButtonDown) {
     auto buttonArea = button.getLocalBounds().toFloat();
-    //float borderSize = buttonArea.getHeight() * ((button.getProperties()["thickBorder"]) ? 0.08 : 0.04);
     float cornerSize = buttonArea.getHeight() * 0.08;
     Colour buttonColor = Colour::fromString(button.getProperties()["colour"].toString());
 
@@ -446,8 +439,6 @@ public:
     Font font (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
     g.setFont (font);
     g.setColour (Colours::white);
-    auto bounds = label.getBounds().toFloat().withTrimmedTop(10.f).withTrimmedBottom(10.f);
-    //g.fillAll(Colours::white);
     g.fillRoundedRectangle(0, 10, 310, label.getHeight() - 20, 15.0f);
     if (label.getText() == "") {
       g.setColour (Colours::grey);
@@ -476,12 +467,8 @@ public:
   void drawLabel (Graphics& g, Label& label) {
     StringArray wordParts;
     StringArray finalText;
-    bool priorPartIsChord;
-    bool successiveChords;
     double lastWordPosition = 0.0;
     double lastChordPosition = 0.0;
-    double lastPosition = 0.0;
-    //double nextWordPosition = 0.0;
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     auto labelArea = label.getLocalBounds();
 
@@ -523,10 +510,7 @@ public:
 
     StringArray words = StringArray::fromTokens(label.getText(),false);
     for (int i = 0; i < words.size(); ++i) { 
-      priorPartIsChord = false;
-      successiveChords = false;
       wordParts = StringArray::fromTokens(words[i],"[]","");
-      //if (i==0 && !(label.getProperties()["type"] == "chordOnly")) wordParts.removeEmptyStrings();
       if (i == 0 || label.getProperties()["type"] == "chordOnly") wordParts.removeEmptyStrings();
       String chordCheck;
       String chord;
@@ -535,84 +519,14 @@ public:
         chordCheck = "["+wordParts[j]+"]";
         if (words[i].contains(chordCheck) || label.getProperties()["type"] == "chordOnly") { // Is a chord    
           chord = wordParts[j];
-          successiveChords = priorPartIsChord;
-          priorPartIsChord = true;
           g.setFont (chordFont);
           g.setColour(chordProChordColor);
           if (lastWordPosition < lastChordPosition) {
             lastWordPosition = lastChordPosition;
           } 
-          //int yPad = chordProSmallChordFont ? 0.1 : 0.025;
-          /*
-          if (chord.contains("b")) {
-            int pos = chord.indexOf("b");
-            double drawPos = lastWordPosition + chordFont.getStringWidthFloat(chord.substring(0,pos));
-            if (!chordProMonospaceFont) drawPos *= 0.97f;
-            g.setFont(monoFont.withHeight(label.getHeight() * 0.6));
-            g.drawFittedText (juce::String::charToString(0x266D),
-              drawPos + leftPad, 0, label.getWidth(), label.getHeight() / 2,
-              Justification::centredLeft, 1, 1.0f);
-            chord = chord.replace("b"," ");
-            g.setFont(chordFont);
-          }
-          */
-         // Apply transpose and flat/sharp conversion
-        chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
-         if (chordProTranspose != 0) {
-          //chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
-          /*
-          // Split out bass note 
-          StringArray chordParts = StringArray::fromTokens(chord,"/","");
-        
-          for (int k = 0; k < chordParts.size(); ++k) {
-            String root;
-            int newIndex = -1;
-            if (chordParts[k].contains("#")) {
-              root = chordParts[k].substring(0,2);
-              newIndex = NOTES_SHARP.indexOf(root) + chordProTranspose;
-              if (newIndex < 0) {
-                newIndex += (NOTES_SHARP.size());
-              } else if (newIndex > NOTES_SHARP.size() - 1) {
-                newIndex -= NOTES_SHARP.size();
-              }
-              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_SHARP[newIndex]));
-            } else if (chordParts[k].contains("b")) {
-              root = chordParts[k].substring(0,2);
-              newIndex = NOTES_FLAT.indexOf(root) + chordProTranspose;
-              if (newIndex < 0) {
-                newIndex += (NOTES_FLAT.size());
-              } else if (newIndex > NOTES_FLAT.size() - 1) {
-                newIndex -= NOTES_FLAT.size();
-              }
-              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_FLAT[newIndex]));
-            } else {
-              root = chordParts[k].substring(0,1);
-              newIndex = NOTES_SHARP.indexOf(root) + chordProTranspose;
-              if (newIndex < 0) {
-                newIndex += (NOTES_SHARP.size());
-              } else if (newIndex > NOTES_SHARP.size() - 1) {
-                newIndex -= NOTES_SHARP.size();
-              }
-              if (newIndex != -1) chordParts.set(k, chordParts[k].replace(root, NOTES_SHARP[newIndex]));
-            }
-          }
-          chord = chordParts.joinIntoString("/");
-          */
-          /*
-          for (int k = 0; k < SHARPS_FLATS.size(); ++k) {
-            if (chordParts[0].startsWith(SHARPS_FLATS[k])) {
-              // Calculate new index
-              newIndex = k + chordProTranspose;
-              if (newIndex < 0) {
-                newIndex += (NOTES_SHARP.size());
-              } else if (newIndex > NOTES_SHARP.size() - 1) {
-                newIndex -= NOTES_SHARP.size();
-              }
-            }
-          } 
-          if (newIndex != -1) chord = NOTES_SHARP[newIndex];
-          */
-         }
+
+          // Apply transpose and flat/sharp conversion
+          chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
         
           if (chordProSmallChordFont && label.getProperties()["type"] == "chordAndLyrics") {
             g.drawFittedText (chord,
@@ -623,14 +537,12 @@ public:
             lastWordPosition + leftPad, label.getHeight() * 0.025, label.getWidth(), label.getHeight() / 2,
             Justification::topLeft, 1, 1.0f);
           }
-          lastChordPosition = lastWordPosition + font.getStringWidthFloat(chord);// + (label.getHeight() / 4);
+          lastChordPosition = lastWordPosition + font.getStringWidthFloat(chord);
           if (label.getProperties()["type"] == "chordAndLyrics") {
             lastChordPosition = lastChordPosition + font.getStringWidthFloat(" "); // Force minimum gap
           } else if (label.getProperties()["type"] == "chordOnly") {
             lastChordPosition = lastChordPosition + font.getStringWidthFloat("  ");  // Minimum gap for chord only lines
           }
-          
-          lastPosition += font.getStringWidthFloat(chord);
         } else {
           g.setColour (chordProLyricColor);
           g.setFont (font);
@@ -638,9 +550,7 @@ public:
             lastWordPosition + leftPad, 0, label.getWidth(), label.getHeight(),
             Justification::bottomLeft, 1, 1.0f);
           chord = "";
-          priorPartIsChord = false;
           lastWordPosition += font.getStringWidthFloat(wordParts[j]);
-          lastPosition += font.getStringWidthFloat(wordParts[j]);
         }
       }
       lastWordPosition += font.getStringWidthFloat(" "); 
@@ -651,9 +561,8 @@ public:
 class chordProTitle : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
-    g.setFont (Font (label.getHeight() * 0.85f, Font::plain).withTypefaceStyle ("Regular")); //.boldened());
+    g.setFont (Font (label.getHeight() * 0.85f, Font::plain).withTypefaceStyle ("Regular"));
     g.setColour (chordProLyricColor);
     g.drawFittedText (label.getText(),
 				leftPad, 0, label.getWidth(), label.getHeight (),
@@ -665,7 +574,6 @@ public:
 class chordProSubTitle : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     g.setFont (Font (label.getHeight(), Font::plain).withTypefaceStyle ("Regular").italicised());
     g.setColour (chordProLyricColor.withAlpha(0.8f));
@@ -702,7 +610,6 @@ public:
     auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font ((Font (label.getHeight() * 2 / 3, Font::plain).withTypefaceStyle ("Regular").boldened().italicised()));
-    //font.setTypefaceName(Font::getDefaultSansSerifFontName());
     g.setFont (font);
     g.setColour (chordProLyricColor.withAlpha(0.8f));
     g.drawFittedText (label.getText(),
@@ -718,7 +625,6 @@ public:
 class chordProTab : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font (Font (label.getHeight(), Font::plain));
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
@@ -745,37 +651,23 @@ public:
 class chordProGrid : public LookAndFeel_V4 {
 public:
   void drawLabel (Graphics& g, Label& label) {
-    //auto labelArea = label.getLocalBounds();
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font (Font (label.getHeight() * 1.0f, Font::plain));
    
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
-    /*
-    if (chordProMonospaceFont) {
-      font.setTypefaceName(Font::getDefaultMonospacedFontName());
-    } else {
-      font = font.withTypefaceStyle("Regular");
-    }
-    */
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
     int gridBars = label.getProperties()["gridBars"];
     int gridBeats = jmax((int)label.getProperties()["gridBeats"], 1);
-    int gridBeatsWithChords = label.getProperties()["gridBeatsWithChords"];
-    //String text = label.getText().toStdString();
-    //text = text.replace("|  ", "| ").trimEnd();
-    //text = text.replace(" ","");
-    //gridLength = juce::jmax(gridLength + 4, 8);
     gridLength = juce::jmax(gridLength > gridBeats ? gridLength + 4 : gridLength, 8);
+    
     // Background
     Font fontSpacer = font;
-    //fontSpacer.setTypefaceName(Font::getDefaultMonospacedFontName());
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
     auto textHeight = (int) font.getHeight();
     g.setColour (chordProDarkMode ? Colours::white.withAlpha(0.08f) : Colours::grey.withAlpha(0.08f));
     if (label.getText() != "")
       g.fillRect( leftPad, 0, textWidth + (int)(label.getHeight() * 0.16), textHeight);
-    //font = font.withHeight(label.getHeight());
 
     // Post Comments
     Font commentFont (Font (label.getHeight(), Font::plain).withTypefaceStyle ("Regular"));
@@ -788,14 +680,12 @@ public:
     // Bars and Chords
     int runningTextWidth = 0;
     int barCount = 1;
-    int beatCount = 0;
     StringArray parts = StringArray::fromTokens(label.getText(),false);
     parts.removeEmptyStrings();
     for (int i = 0; i < parts.size(); ++i) { 
       g.setColour (chordProLyricColor.withAlpha(0.8f));
       juce::AttributedString barCharacter;
       juce::String partCharacter = parts[i];
-      int characterLength = partCharacter.length();
       if (partCharacter == "|" || partCharacter == "||" || partCharacter == "|:" || partCharacter == ":|") {
         // Draw bar characters
         if (partCharacter == "|") {
@@ -807,8 +697,6 @@ public:
         } else if (partCharacter == ":|") {
           barCharacter.setText(juce::String::charToString(0x1D107));
         }
-        characterLength = 1;
-        beatCount = 1;
         Font barFont (Font (label.getHeight() * 1.4f, Font::plain));
         barFont.setTypefaceName(Font::getDefaultMonospacedFontName());
         #if JUCE_WINDOWS
@@ -840,27 +728,18 @@ public:
             Justification::topLeft, 1, 1.0f);
 
         } else {
-          if (beatCount > 1) {
-            float width = font.getStringWidthFloat(" ") * (float)(gridLength / gridBeats);
-            //runningTextWidth += ((int)font.getStringWidthFloat(" ") 
-          }
           if (partCharacter != ".") {
             partCharacter = ChordPro::CP_Transpose(partCharacter, chordProTranspose, chordProTransposeDisplay);
             g.drawFittedText (partCharacter,
               leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
               Justification::centredLeft, 1, 1.0f);
-            //runningTextWidth += ((int)font.getStringWidthFloat(" ") * gridLength / gridBeats);
-
-          } else {
-
-          }
+          } 
           runningTextWidth += (int)(font.getStringWidthFloat(" ") * (float)(gridLength / gridBeats));
-          beatCount++;
-          //runningTextWidth += ((int)font.getStringWidthFloat(" ") * (characterLength + 1));
         }
 
       }
     }
+
     // Section Label
     if (chordProLeftLabels) {
       String sectionLabel = label.getProperties()["sectionLabel"];
@@ -876,7 +755,6 @@ public:
 class popOverLookAndFeel : public LookAndFeel_V4 {
 public:
   void drawButtonText (Graphics& g, TextButton& button,
-		//bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
     bool, bool)
 	{
     int y = 0;
@@ -907,14 +785,13 @@ public:
     auto buttonArea = button.getLocalBounds().toFloat().reduced (0.5f);
     float cornerSize = 5.f;
     if (button.getToggleState()) {
-      g.setColour (Colour(0xff6a6a6a));
-      
+      g.setColour (Colour(0xff6a6a6a)); 
     } else if (isButtonHighlighted && !isButtonDown) {
       g.setColour (Colours::darkgrey);
     } else if (isButtonDown) {
       g.setColour (Colour(0xff9a9a9a));
     } else {
-      g.setColour (Colours::darkgrey.withLightness(0.15f));//Colour(0xff2f2f2f));
+      g.setColour (Colours::darkgrey.withLightness(0.15f));
     }   
     g.fillRoundedRectangle (buttonArea, cornerSize);
     g.setColour(Colours::white.withAlpha(0.1f));
@@ -925,7 +802,6 @@ public:
 class popOverLabel : public LookAndFeel_V4 {
 public:
 	void drawLabel (Graphics& g, Label& label) {
-		//const int yIndent = label.proportionOfHeight (0.2f);
 		const int textWidth = label.getWidth();
     g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
     g.setColour (chordProLyricColor.withMultipliedBrightness(0.8f));

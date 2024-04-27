@@ -1,12 +1,9 @@
-//#ifndef CHORDPRO_H_
-//#define CHORDPRO_H_
+// Lyrics and Chords extension for Gig Performer by @rank13
 
 #pragma once
 
-
 #include <juce_core/juce_core.h>
 #include <juce_gui_basics/juce_gui_basics.h>
-
 #include "Constants.h"
 
 using namespace juce;
@@ -37,7 +34,6 @@ public:
 private:
     OwnedArray<ChordDiagramNote> keyboard;
     int numberOfWhiteKeys = 7;
-    int numberOfBlackKeys = 5;
     int octaves = 2;
     String chord = "";
     String chordLabel = "";
@@ -54,7 +50,6 @@ public:
     void updateChord(String newChord, StringArray newChordNotes);
     String getChord();
     void updateChordDiagram(int transpose, FLAT_SHARP_DISPLAY accidental);
-    //void updateKeyOnColour(Colour newColour);
     void setDarkMode(bool isDarkMode);
     void allNotesOff();
 
@@ -79,7 +74,3 @@ public:
     int static CP_GetRootNoteIndex(String rootNote);
 
 };
-
-
-
-//#endif

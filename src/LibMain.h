@@ -7,38 +7,32 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ExtensionWindow.h"
 #include "Constants.h"
+#include "Version.h"
 
-// Define an XML string describing your product
 const std::string XMLProductDescription =
     "<Library>"
-    "<Product Name=\"GP Lyrics/Chords\" Version=\"1.6b2\" BuildDate=\"01/01/2024\"></Product> "
-    "<Description>Lyrics and Chords Viewer</Description>"
+    "<Product Name=\"" + PROJECT_TITLE + "\" Version=\"" + PROJECT_VERSION + "\" BuildDate=\"" + PROJECT_BUILD_DATE + "\"></Product>"
+    "<Description>" + PROJECT_DESCRIPTION + "</Description>"
     "<ImagePath></ImagePath>"
     "</Library>";
 
-// Define your class here - it MUST be called LibMain and it must inherit from GigPerformerAPI
 class LibMain : public gigperformer::sdk::GigPerformerAPI
 {
 protected:
-    // These are for creating menu items in Gig Performer that can be used to trigger external functions provided by the extension developer
     int GetMenuCount() override;
     std::string GetMenuName(int index) override;
     void InvokeMenu(int itemIndex) override;
 
-    // These are for creating the custom panel template
     int GetPanelCount() override;
     std::string GetPanelName(int index) override;
     std::string GetPanelXML(int index) override;
 
 public:
-    // These must be here but no need to do anything unless you want extra behavior
     LibMain();
     LibMain(LibraryHandle handle) : GigPerformerAPI(handle)  {}
     virtual ~LibMain() {}
     void OnOpen() override;
     void OnClose() override;
-    void OnRackspaceActivated() override;
-    void OnVariationChanged(int oldIndex, int newIndex) override;
     void OnModeChanged(int mode) override;
     void OnSongChanged(int oldIndex, int newIndex) override;
     void OnSongPartChanged(int oldIndex, int newIndex) override;
@@ -50,8 +44,6 @@ public:
         registerCallback("OnOpen");
         registerCallback("OnClose");
         registerCallback("OnStatusChanged");
-        registerCallback("OnRackspaceActivated");
-        registerCallback("OnVariationChanged");
         registerCallback("OnSongChanged");
         registerCallback("OnSongPartChanged");
         registerCallback("OnSetlistChanged");
@@ -67,16 +59,14 @@ public:
         listenForWidget(WIDGET_CP_DOWN, true);
     }
     
-    std::string GetProductDescription() override; // This MUST be defined in your class
+    std::string GetProductDescription() override;
     std::vector<std::string> getRackspaceNames();
     std::vector<std::string> getVariationNames(int rackspaceIndex);
     std::vector<std::string> getSetlistNames();
     std::vector<std::string> getSongNames();
     std::vector<std::string> getSongPartNames(int songIndex);
     std::vector<std::string> getVariationNamesForSong(int songIndex);
-     void readPreferencesFile();
 
 private:
     std::vector<std::vector<std::string>> getAllVariationNames();
-   
 };

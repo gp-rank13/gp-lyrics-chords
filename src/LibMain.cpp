@@ -39,23 +39,6 @@ void LibMain::InvokeMenu(int index)
                   case 0:
                       ExtensionWindow::displayWindow(true);
                      break;
-                /*
-                  case 1:
-                    ExtensionWindow::toggleZeroBasedNumbering();
-                    break;
-                  case 2:
-                    ExtensionWindow::toggleLargeScrollArea();
-                    break;
-                  case 3:
-                    ExtensionWindow::toggleThickBorders();
-                    break;
-                  case 4:
-                    ExtensionWindow::toggleVariationsInSetlistMode();
-                    break;
-                  case 5:
-                    ExtensionWindow::toggleLeftMarginLabels();
-                    break;
-                */
                   case 1:
                     ExtensionWindow::displayWindow(true);
                     ExtensionWindow::displayPreferencesContainer(true);
@@ -63,6 +46,7 @@ void LibMain::InvokeMenu(int index)
                   default:
                      break;   
                }
+               isFirstGigFileOpened = true; // Handle scenario where extension is manually activated in GP
          }
 }
 
@@ -169,16 +153,13 @@ void LibMain::OnStatusChanged(GPStatusType status) {
     switch (status) {
         case GPStatus_GigStartedLoading:
             isGigFileLoading = true;
-            //consoleLog("Gig Started Loading");
             break;
         case GPStatus_GigFinishedLoading:
-            //consoleLog("Gig Finished Loading");
             isGigFileLoading = false;
             if (!isFirstGigFileOpened) {
-                readPreferencesFile();
+                ExtensionWindow::readPreferencesFile();
                 isFirstGigFileOpened = true;
             }
-            //readPreferencesFile();
             ExtensionWindow::updateButtonNames(getSongNames());
             ExtensionWindow::updateSetlistButtons(getSetlistNames());
             ExtensionWindow::chordProReadFile(0);
@@ -193,18 +174,6 @@ void LibMain::OnStatusChanged(GPStatusType status) {
 
             ExtensionWindow::refreshUI();
             break;
-        case GPStatus_RackspaceListModified:
-            //consoleLog("Rackspace list changed");
-            break;
-        case GPStatus_SongListModifed:
-            //consoleLog("Song list changed");
-            break;
-        case GPStatus_SongPartListModified:
-            //consoleLog("SongPart list changed");
-            break;
-        case GPStatus_VariationListModified:
-            //consoleLog("Variation list changed");
-            break;
         case GPStatus_SaveRequest:
             ExtensionWindow::savePreferences();
             break;
@@ -214,7 +183,6 @@ void LibMain::OnStatusChanged(GPStatusType status) {
 }
 
 void LibMain::OnOpen() {
-    //consoleLog("Opened");
     extensionPath = getPathToMe();
     ExtensionWindow::initialize();
 }
@@ -223,42 +191,9 @@ void LibMain::OnClose() {
     ExtensionWindow::finalize();
 }
 
-void LibMain::OnRackspaceActivated() {
-    /*
-    if (isGigFileLoading) return;
-    if (!inSetlistMode()) {
-        int index = getCurrentRackspaceIndex();
-        if (index >= 0) {
-            ExtensionWindow::updateButtonNames(getRackspaceNames());
-            if (!ExtensionWindow::isButtonSelected(index)) { // If selected in GP directly, ensure buttons are in sync
-                ExtensionWindow::selectButton(index);
-                ExtensionWindow::updateSubButtonNames(getVariationNames(index));
-                ExtensionWindow::selectSubButton(getCurrentVariationIndex());
-            } else {
-                ExtensionWindow::updateSubButtonNames(getVariationNames(index));
-            }
-        }
-    }
-    */
-}
-
-void LibMain::OnVariationChanged(int oldIndex, int newIndex) {
-    /*
-    if (isGigFileLoading) return;
-    if (newIndex >= 0 && oldIndex != newIndex && !inSetlistMode()) {
-        int rackspaceIndex = getCurrentRackspaceIndex();
-        if (!ExtensionWindow::isSubButtonSelected(newIndex)) {
-            ExtensionWindow::selectSubButton(newIndex);
-        ExtensionWindow::updateSubButtonNames(getVariationNames(rackspaceIndex));
-        }
-    }
-    */
-}
-
 void LibMain::OnSongChanged(int, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && inSetlistMode()) {
-        //consoleLog("Song changed");
         ExtensionWindow::updateButtonNames(getSongNames());
         ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);
@@ -266,8 +201,10 @@ void LibMain::OnSongChanged(int, int newIndex) {
             ExtensionWindow::selectButton(newIndex);
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
             ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
+            ExtensionWindow::extension->resized();
         } else {
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
+            ExtensionWindow::selectSubButton(0);
         }
     }
 }
@@ -277,7 +214,7 @@ void LibMain::OnSongPartChanged(int oldIndex, int newIndex) {
     if (newIndex >= 0 && oldIndex != newIndex && inSetlistMode()) {
         int songIndex = getCurrentSongIndex();
         if (!ExtensionWindow::isSubButtonSelected(newIndex)) {
-            ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(songIndex) : getSongPartNames(songIndex));
+            ExtensionWindow::compareSubButtonNames(getSongPartNames(songIndex));
             ExtensionWindow::selectSubButton(newIndex);
             ExtensionWindow::chordProScrollToSongPart(getSongpartName(getCurrentSongIndex(), newIndex));
         }
@@ -290,29 +227,24 @@ void LibMain::OnSetlistChanged(const std::string&) {
         int songIndex = getCurrentSongIndex();
         ExtensionWindow::updateSetlistButtons(getSetlistNames());
         ExtensionWindow::updateButtonNames(getSongNames());
-        //ExtensionWindow::selectButton(getCurrentSongIndex());
         ExtensionWindow::selectSetlistButton(getCurrentSetlistIndex());
-        //consoleLog("Song: " + std::to_string(songIndex));
         ExtensionWindow::chordProReadFile(songIndex);
         if (!ExtensionWindow::isButtonSelected(songIndex)) { // If selected in GP directly, ensure buttons are in sync
             ExtensionWindow::selectButton(songIndex);
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(songIndex) : getSongPartNames(songIndex));
             ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
         }
-        
+        ExtensionWindow::extension->resized();
     }
 }
 
 void LibMain::OnModeChanged(int mode) {
-    //consoleLog("Mode changed");
-    if (isGigFileLoading || !isFirstGigFileOpened) return;
-    //readPreferencesFile("colors");
-    //if (mode == GP_SetlistMode) setWidgetValue(WIDGET_CP_SCROLL, 0.0);
-    //ExtensionWindow::refreshUI();
-    if (mode == GP_SetlistMode) ExtensionWindow::selectSongForCurrentButton();
+    if (isGigFileLoading || !isFirstGigFileOpened) 
+        return;
+    if (mode == GP_SetlistMode) 
+        ExtensionWindow::selectSongForCurrentButton();
 }
 
-// Handle widget changes
 void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValue) {
     if (widgetName == WIDGET_DISPLAY) {
         if (newValue == 1.0) {
@@ -335,46 +267,7 @@ void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValu
     } 
 }
 
-void LibMain::readPreferencesFile() {
-    std::string prefsFileText;
-    std::string prefsFilePath = getPathToMe() + PATH_SEPARATOR() + PREF_FILENAME;
-    gigperformer::sdk::GPUtils::loadTextFile(prefsFilePath, prefsFileText);
-    StringArray lines = StringArray::fromLines(prefsFileText);
-    StringArray keyValue;
-    StringPairArray defaults;
-    StringPairArray colors;
-    StringPairArray chordpro;
-    StringPairArray windowstate;
-    String line;
-    String prefSection;
-    //consoleLog(lines[1].toStdString());
-    for (int i = 0; i < lines.size(); ++i) { 
-        line = lines[i].toStdString();
-        if (line.contains("[")) { // Preference Heading/Section
-            prefSection = line.removeCharacters("[]");
-            //consoleLog("Line " + std::to_string(i) + " is heading: " + prefSection.toStdString());
-        } else if (line.trim() != "") { // Process Preferences, assuming key/value pairs
-            line = line.removeCharacters(" ");
-            keyValue = StringArray::fromTokens(line,"=","");
-            //consoleLog(keyValue[0].toStdString() + " / " + keyValue[1].toStdString() + " / " + prefSection.toStdString());
-            if (prefSection.contains("Defaults")) {
-                defaults.set(keyValue[0], keyValue[1]);
-            } else if (prefSection.contains("SongPartColors")) {
-                colors.set(keyValue[0], keyValue[1]);
-            } else if (prefSection.contains("LyricChordColors")) {
-                chordpro.set(keyValue[0], keyValue[1]);
-            } else if (prefSection.contains("WindowLastSavedState")) {
-                windowstate.set(keyValue[0], keyValue[1]);
-            }
-        }
-    }
-    ExtensionWindow::processPreferencesDefaults(defaults);
-    ExtensionWindow::processPreferencesColors(colors);
-    ExtensionWindow::processPreferencesChordProColors(chordpro);
-    ExtensionWindow::processPreferencesWindowState(windowstate);
-}
-
-std::string LibMain::GetProductDescription()  // This MUST be defined in your class
+std::string LibMain::GetProductDescription()
 {
     return XMLProductDescription;
 }

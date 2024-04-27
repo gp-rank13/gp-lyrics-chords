@@ -1,0 +1,10 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+const std::string PROJECT_NAME = "@PROJECT_NAME@";
+const std::string PROJECT_TITLE = "@PROJECT_TITLE@";
+const std::string PROJECT_DESCRIPTION = "@PROJECT_DESCR@";
+const std::string PROJECT_VERSION = "@PROJECT_VERSION@";
+const std::string PROJECT_BUILD_DATE = "@PROJECT_BUILD_DATE@";
+
+#endif // VERSION_H
