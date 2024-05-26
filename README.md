@@ -8,7 +8,7 @@
 
 ## Installation
 
-Download the extension (library) files for either MacOS or Windows from the [Releases](https://github.com/gp-rank13/gp-selector/releases) page.  
+Download the extension (library) files for either MacOS or Windows from the [Releases](https://github.com/gp-rank13/gp-lyrics-chords/releases) page.  
 
 Mac users will need to move the _libGPLyricsChords.dylib_ file into this folder and then restart Gig Performer:
 ```
