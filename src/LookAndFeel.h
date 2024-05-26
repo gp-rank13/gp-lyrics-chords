@@ -50,7 +50,7 @@ public:
     g.setFont (font2);
     g.setColour (button.getToggleState () ? Colours::white : Colour(0xffc5c5c5));
     g.drawFittedText (buttonText,
-      leftIndent + (numberWidth * 1.5), yIndent, availableWidth - (numberWidth * 1.5), buttonHeight - yIndent * 2,
+      (int)(leftIndent + (numberWidth * 1.5)), (int)yIndent, (int)(availableWidth - (numberWidth * 1.5)), (int)(buttonHeight - yIndent * 2.0),
       Justification::left, rows, 1.0f);
 	}
 

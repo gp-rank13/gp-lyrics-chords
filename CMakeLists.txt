@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Let's choose a name and version for the extension. Change the name to your
 # liking. The version should be a string like "1.0".
 set(PROJECT_NAME "GPLyricsChords") # Change this to your liking
-set (PROJECT_VERSION "1.0.11")
+set (PROJECT_VERSION "1.0.12")
 set (PROJECT_TITLE "GP Lyrics/Chords")
 set (PROJECT_DESCR "Lyrics and Chords Viewer")
 string(TIMESTAMP TODAY "%d/%m/%Y")

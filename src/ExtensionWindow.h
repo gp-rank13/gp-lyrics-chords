@@ -249,7 +249,7 @@ public:
 
     runningY += titleHeight * 2;
     g.setColour(Colour::fromString(HEADER_SONG_COLOR));
-    g.fillRect(0, runningY, getWidth(), 5);
+    g.fillRect(30, runningY + (prefHeight / 2), 200, 90);
 
     runningY += prefHeight;
 
@@ -357,8 +357,7 @@ class MyDocumentWindow : public DocumentWindow
 };
 
 class ExtensionWindow  :  public juce::Component,
-                          public juce::Button::Listener,
-                          public juce::ChangeListener   
+                          public juce::Button::Listener
 {
 public:
   ExtensionWindow ();
@@ -450,14 +449,6 @@ public:
   void mouseDrag ( const MouseEvent& ) override
     {
         resized();
-    }
-  
-  void changeListenerCallback (ChangeBroadcaster* source) override
-    {
-      if (ColourSelector* cs = dynamic_cast <ColourSelector*> (source))
-      {
-          const String& name = cs->getName();
-      }
     }
   
   void static chordProScrollWindow(double value);

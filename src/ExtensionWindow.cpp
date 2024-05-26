@@ -1674,8 +1674,6 @@ void ExtensionWindow::initialize() {
 void ExtensionWindow::finalize()
 {
     savePreferences();
-    delete lib;
-    lib = nullptr;
     if (extension != nullptr) {
         delete extension;
         extension = nullptr;
