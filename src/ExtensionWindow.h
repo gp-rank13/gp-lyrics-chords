@@ -16,6 +16,7 @@
 using namespace juce;
 
 extern Colour viewPortBackground;
+extern bool chordProTwoColumnsExtern;
 
 class MyDraggableComponent : public Component 
 {
@@ -103,8 +104,26 @@ class ChordProContainer : public Component
 {
 public:
   void mouseDown (const MouseEvent& e) override;
-
+  void paint(Graphics& g) override {
+    if (chordProTwoColumnsExtern) {
+      if (viewPortBackground == Colour::fromString(CP_DARK_BACKGROUND_COLOR)){
+        g.setColour(Colour(0xff2a2a2a));
+      } else  {
+         g.setColour(Colour(0xfff0f0f0));
+      }
+      // Vertical page separator
+      g.fillRect(getWidth() / 2, 0, 5, getHeight());
+      // Horizontal page separators
+      int height = getHeight();
+      int windowHeight = getParentComponent()->getHeight();
+      int separatorCount = (int)(height / windowHeight);
+      for (int i = 0; i < separatorCount; ++i) { 
+        g.fillRect(0, (windowHeight * (i + 1)) - 3, getWidth(), 5);
+      }
+    }
+  }
 };
+
 
 class ChordProEditorContainer : public Component
 {
