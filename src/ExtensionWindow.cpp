@@ -587,7 +587,10 @@ void ExtensionWindow::resized()
     int headerLabelWidth = headerLabelFont.getStringWidth(headerLabel);
     header->setBounds (0, 0, getWidth(), headerHeight);
     clock->setBounds (getWidth()/2 - 50, 0, 100, headerHeight);
-    clock->setVisible(getWidth() > 725 && clock->getX() > headerLabelWidth ? true : false);
+    clock->setVisible(((getWidth() > 790 && chordProForCurrentSong && !chordProImagesOnly)
+        || (getWidth() > 730 && chordProForCurrentSong && chordProImagesOnly)
+        || (getWidth() > 420 &&!chordProForCurrentSong)) 
+        && clock->getX() > headerLabelWidth ? true : false);
     if (chordProImagesOnly && getWidth() < 560) clock->setVisible(false);
     if (fontButtonContainer.getX() < x + 5) fontButtonContainer.setVisible(false);
     if (missingImageContainer.getX() < x + 5) missingImageContainer.setVisible(false);
@@ -822,7 +825,7 @@ void ExtensionWindow::resized()
                     } else {
                         extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     }
-                    rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : rowHeight + padding;
+                    rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : newHeight + padding;
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramKeyboard") {
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
                     int x = leftPad;
@@ -858,14 +861,20 @@ void ExtensionWindow::resized()
                 int chordProX = 10;
                 int chordProPad = 10;
                 // Two pages layout
-                if (!chordProImagesOnly && chordProTwoColumns && runningHeight + rowHeight > viewportRight.getHeight() * (pageIndex + 1)){
+                if (chordProTwoColumns && !chordProImagesOnly && runningHeight + rowHeight > viewportRight.getHeight() * (pageIndex + 1)){
                     runningHeight = 20.0;
                     columnIndex = (columnIndex * -1) + 1;
                     if (columnIndex == 0) pageIndex++;
                     runningHeight += (viewportRight.getHeight() * pageIndex);
                 }
                 chordProX = columnIndex == 0 ? chordProPad : chordProContainer.getWidth() / columns + chordProPad;
-                chordProLines[i]->setBounds(chordProX, runningHeight, chordProContainer.getWidth() / columns - chordProPad, rowHeight);
+                auto bounds = Rectangle(chordProX, (int)runningHeight, (int)(chordProContainer.getWidth() / columns - chordProPad), (int)rowHeight);
+                chordProLines[i]->setBounds(bounds);
+                // Adjust position of images for two column view
+                if (chordProLines[i]->getProperties()["type"] == "image" && chordProTwoColumns && !chordProImagesOnly) {
+                    int imageIndex = chordProLines[i]->getProperties()["imageIndex"]; 
+                    extension->chordProImages[imageIndex]->setBounds(bounds);
+                }
                 runningHeight += rowHeight;
 
                 // Wrapping text for lyrics and chords
@@ -934,7 +943,7 @@ void ExtensionWindow::resized()
                             }
                         }   
                     }
-                }
+                } 
             } else {
                 chordProLines[i]->setBounds(10,runningHeight,chordProContainer.getWidth() / columns, 0);
             }
@@ -2467,7 +2476,6 @@ void ExtensionWindow::setSongPanelPosition(bool display) {
     extension->container.setBounds(extension->container.getBounds().withWidth(newWidth));
     extension->sidePanelCloseButton->setVisible(display);
     extension->sidePanelOpenButton->setVisible(!display);
-    extension->setSongPanelToFloating(!display);
     extension->resized();
 }
 
