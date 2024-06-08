@@ -20,6 +20,7 @@ bool chordProMonospaceFont = false;
 bool chordProSmallChordFont = false;
 bool chordProLeftLabels = false;
 bool chordProDarkMode = false;
+bool chordProTwoColumnsExtern = false;
 bool lockToSetlistMode = false;
 bool displayVariationsForSong = false;
 bool searchCaratOn = true;
@@ -586,7 +587,10 @@ void ExtensionWindow::resized()
     int headerLabelWidth = headerLabelFont.getStringWidth(headerLabel);
     header->setBounds (0, 0, getWidth(), headerHeight);
     clock->setBounds (getWidth()/2 - 50, 0, 100, headerHeight);
-    clock->setVisible(getWidth() > 725 && clock->getX() > headerLabelWidth ? true : false);
+    clock->setVisible(((getWidth() > 790 && chordProForCurrentSong && !chordProImagesOnly)
+        || (getWidth() > 730 && chordProForCurrentSong && chordProImagesOnly)
+        || (getWidth() > 420 &&!chordProForCurrentSong)) 
+        && clock->getX() > headerLabelWidth ? true : false);
     if (chordProImagesOnly && getWidth() < 560) clock->setVisible(false);
     if (fontButtonContainer.getX() < x + 5) fontButtonContainer.setVisible(false);
     if (missingImageContainer.getX() < x + 5) missingImageContainer.setVisible(false);
@@ -638,18 +642,19 @@ void ExtensionWindow::resized()
         fontButton->setBounds (iconBounds.withSizeKeepingCentre(27,27));
         fontButton->setVisible(fontButton->getX() > headerLabelWidth + 20);
     }
-    if (chordProImagesOnly && chordProForCurrentSong) {
+
+    if (chordProForCurrentSong) {
         iconBounds = iconBounds.withX(iconBounds.getX() - 40);
         columnsOneButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
         columnsTwoButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
+        columnsOneButton->setVisible(chordProTwoColumns && columnsOneButton->getX() > headerLabelWidth + 20);
+        columnsTwoButton->setVisible(!chordProTwoColumns && columnsTwoButton->getX() > headerLabelWidth + 20);
+    }
 
-        columnsOneButton->setVisible(chordProTwoColumns && chordProImagesOnly && columnsOneButton->getX() > headerLabelWidth + 20);
-        columnsTwoButton->setVisible(!chordProTwoColumns && chordProImagesOnly && columnsTwoButton->getX() > headerLabelWidth + 20);
-
+    if (chordProImagesOnly && chordProForCurrentSong) {
         iconBounds = iconBounds.withX(iconBounds.getX() - 40);
         fitWidthButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
         fitHeightButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
-
         fitWidthButton->setVisible(fitHeight && chordProImagesOnly && fitWidthButton->getX() > headerLabelWidth + 20);
         fitHeightButton->setVisible(!fitHeight && chordProImagesOnly && fitHeightButton->getX() > headerLabelWidth + 20);
     }
@@ -770,10 +775,12 @@ void ExtensionWindow::resized()
             setlistCount++;
         }
     }
-
+    // ChordPro
     if (chordProForCurrentSong && viewportRight.isVisible()) {
         float runningHeight = 0.0;
-        float columns = (chordProTwoColumns && chordProImagesOnly) ? 2.0 : 1.0;
+        float columns = (chordProTwoColumns) ? 2.0 : 1.0;
+        int columnIndex = 0;
+        int pageIndex = 0;
         float padding = chordProImagesOnly ? chordProContainer.getWidth() * 0.005 : 0.0;
         int imageCount = chordProGetVisibleImageCount();
         if (!chordProImagesOnly) runningHeight += chordProTopPadding;
@@ -811,14 +818,14 @@ void ExtensionWindow::resized()
                         if (chordProTwoColumns) imageX = juce::jmax(0, (int)((viewportRight.getWidth() - (newWidth * columns)) / 2));
                     }
                     rowHeight = newHeight; 
-                    if (chordProTwoColumns && chordProImagesOnly & !fitHeight) {
+                    if (chordProTwoColumns && chordProImagesOnly && !fitHeight) {
                         extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? 0 : newWidth + padding , runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     } else if (chordProTwoColumns && chordProImagesOnly && fitHeight) {
                         extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? imageX : imageX + newWidth + padding, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     } else {
                         extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     }
-                    rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : rowHeight + padding;
+                    rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : newHeight + padding;
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramKeyboard") {
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
                     int x = leftPad;
@@ -828,7 +835,7 @@ void ExtensionWindow::resized()
                     int s = CP_KEYBOARD_SEPARATOR * chordProFontSize;
                     for (int i = 0; i < chordProDiagramKeyboard.size(); ++i) {
                         // Wrap diagram
-                        if (x - s + w > chordProContainer.getWidth()) {
+                        if (x - s + w > chordProContainer.getWidth() / columns) {
                             x = leftPad;
                             y += h;
                         }
@@ -839,20 +846,45 @@ void ExtensionWindow::resized()
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramFretboard") {
                     rowHeight = CP_FRETBOARD_WIDTH * chordProFontSize;
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
+                    int diagramX = 0;
+                    int diagramW = 0;
                     for (int i = 0; i < chordProDiagramFretboard.size(); ++i) {
-                        chordProDiagramFretboard[i]->setBounds(leftPad + (i * (CP_FRETBOARD_WIDTH + CP_FRETBOARD_SEPARATOR) * chordProFontSize), runningHeight, CP_FRETBOARD_WIDTH * chordProFontSize, rowHeight);
+                        diagramX = leftPad + (i * (CP_FRETBOARD_WIDTH + CP_FRETBOARD_SEPARATOR) * chordProFontSize);
+                        diagramW = CP_FRETBOARD_WIDTH * chordProFontSize;
+                        chordProDiagramFretboard[i]->setBounds(diagramX, runningHeight, diagramW, rowHeight);
+                        bool display = (!chordProTwoColumns || (chordProTwoColumns && ((diagramX + diagramW - CP_FRETBOARD_SEPARATOR) < (viewportRight.getWidth() / columns)))); 
+                        chordProDiagramFretboard[i]->setVisible(display);
                     }
-                }
-                else {
+                } else {
                     rowHeight = 40.0 * chordProFontSize;
                 }
-                chordProLines[i]->setBounds(10, runningHeight, chordProContainer.getWidth(), rowHeight);
+                int chordProX = 10;
+                int chordProPad = 10;
+                // Two pages layout
+                if (chordProTwoColumns && !chordProImagesOnly && runningHeight + rowHeight > viewportRight.getHeight() * (pageIndex + 1)){
+                    runningHeight = 20.0;
+                    columnIndex = (columnIndex * -1) + 1;
+                    if (columnIndex == 0) pageIndex++;
+                    runningHeight += (viewportRight.getHeight() * pageIndex);
+                }
+                chordProX = columnIndex == 0 ? chordProPad : chordProContainer.getWidth() / columns + chordProPad;
+                auto bounds = Rectangle(chordProX, (int)runningHeight, (int)(chordProContainer.getWidth() / columns - chordProPad), (int)rowHeight);
+                chordProLines[i]->setBounds(bounds);
+                // Adjust position of images for two column view
+                if (chordProLines[i]->getProperties()["type"] == "image" && chordProTwoColumns && !chordProImagesOnly) {
+                    int imageIndex = chordProLines[i]->getProperties()["imageIndex"]; 
+                    extension->chordProImages[imageIndex]->setBounds(bounds);
+                }
                 runningHeight += rowHeight;
 
                 // Wrapping text for lyrics and chords
-                if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics" || chordProLines[i]->getProperties()["type"] == "lyricOnly") {
+                if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics" || chordProLines[i]->getProperties()["type"] == "lyricOnly" || chordProLines[i]->getProperties()["type"] == "comment") {
                     Font labelFont (Font (chordProLines[i]->getHeight() * 0.5f, Font::plain));
-                    if (chordProLines[i]->getProperties()["type"] == "lyricOnly") labelFont.setHeight(chordProLines[i]->getHeight());
+                    if (chordProLines[i]->getProperties()["type"] == "lyricOnly") {
+                        labelFont.setHeight(chordProLines[i]->getHeight());
+                    } else if (chordProLines[i]->getProperties()["type"] == "comment") {
+                        labelFont.setHeight(chordProLines[i]->getHeight() * 0.7f);
+                    }
                     if (chordProMonospaceFont) {
                         labelFont.setTypefaceName(Font::getDefaultMonospacedFontName());
                     } else {
@@ -861,44 +893,47 @@ void ExtensionWindow::resized()
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
                     String excludeChords = std::regex_replace(chordProLines[i]->getProperties()["originalText"].toString().toStdString(), std::regex("\\[(.*?)\\]"), "");
                     int labelWidth = labelFont.getStringWidth(excludeChords) + leftPad;
-                    if (labelWidth > chordProContainer.getWidth()) {
+                    if (labelWidth > chordProContainer.getWidth() / columns) {
                         if (chordProLines[i]->getName() != "wrap") {
-                   
-                        if (i < chordProLines.size() - 1) {
-                            if (chordProLines[i+1]->getName() != "wrap") { // Wrapped line doesn't yet exist - create one
-                                addChordProLine(i+1, "wrap");
-                                chordProLines[i+1]->getProperties().set("type", chordProLines[i]->getProperties()["type"]);
-                                chordProLines[i+1]->getProperties().set("section", chordProLines[i]->getProperties()["section"]); 
-                            }
-                            // Update label text on both wrapped lines
-                            int wrapPosition = labelWidth - (labelWidth - chordProContainer.getWidth());
-                            StringArray words = StringArray::fromTokens(excludeChords,false);
-                            words.removeEmptyStrings();
-                            int runningTextWidth = 0;
-                            int wordIndex = 0;
-                            for (int i = 0; i < words.size(); ++i) { 
-                                runningTextWidth += labelFont.getStringWidth(words[i] + " ");
-                                if (runningTextWidth + leftPad > wrapPosition) {
-                                    if (wordIndex == 0)
-                                    wordIndex = i;
+                            if (i < chordProLines.size() - 1) {
+                                if (chordProLines[i+1]->getName() != "wrap") { // Wrapped line doesn't yet exist - create one
+                                    addChordProLine(i+1, "wrap");
+                                    chordProLines[i+1]->getProperties().set("type", chordProLines[i]->getProperties()["type"]);
+                                    chordProLines[i+1]->getProperties().set("section", chordProLines[i]->getProperties()["section"]); 
+                                    chordProLines[i+1]->setLookAndFeel(&chordProLines[i]->getLookAndFeel());
                                 }
+                                // Update label text on both wrapped lines
+                                int wrapPosition = labelWidth - (labelWidth - (chordProContainer.getWidth() / columns));
+                                StringArray words = StringArray::fromTokens(excludeChords,false);
+                                words.removeEmptyStrings();
+                                int runningTextWidth = 0;
+                                int wordIndex = 0;
+                                for (int i = 0; i < words.size(); ++i) { 
+                                    runningTextWidth += labelFont.getStringWidth(words[i] + " ");
+                                    if (runningTextWidth + leftPad > wrapPosition) {
+                                        if (wordIndex == 0)
+                                        wordIndex = i;
+                                    }
+                                }
+                                String firstLine = "";
+                                String secondLine = "";
+                                words = StringArray::fromTokens(chordProLines[i]->getProperties()["originalText"].toString(),false);
+                                words.removeEmptyStrings();
+                                for (int i = 0; i < words.size(); ++i) {  
+                                    if (i < wordIndex) firstLine += words[i] + " ";
+                                    if (i >= wordIndex) secondLine += words[i] + " ";
+                                }
+                                // Update line type if it only contains lyrics
+                                if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics") {
+                                    if (!secondLine.contains("[")) {
+                                        chordProLines[i+1]->getProperties().set("type","lyricOnly");
+                                    } else {
+                                        chordProLines[i+1]->getProperties().set("type","chordAndLyrics");
+                                    }
+                                }
+                                chordProLines[i]->setText(firstLine, dontSendNotification);
+                                chordProLines[i+1]->setText(secondLine, dontSendNotification);
                             }
-                            String firstLine = "";
-                            String secondLine = "";
-                            words = StringArray::fromTokens(chordProLines[i]->getProperties()["originalText"].toString(),false);
-                            words.removeEmptyStrings();
-                            for (int i = 0; i < words.size(); ++i) {  
-                                if (i < wordIndex) firstLine += words[i] + " ";
-                                if (i >= wordIndex) secondLine += words[i] + " ";
-                            }
-                            if (!secondLine.contains("[")) {
-                                chordProLines[i+1]->getProperties().set("type","lyricOnly");
-                            } else {
-                                chordProLines[i+1]->getProperties().set("type","chordAndLyrics");
-                            }
-                            chordProLines[i]->setText(firstLine, dontSendNotification);
-                            chordProLines[i+1]->setText(secondLine, dontSendNotification);
-                        }
                         }
                     } else {
                         if (i < chordProLines.size() - 1) {
@@ -908,12 +943,16 @@ void ExtensionWindow::resized()
                             }
                         }   
                     }
-                }
+                } 
             } else {
-                chordProLines[i]->setBounds(10,runningHeight,chordProContainer.getWidth(),0);
+                chordProLines[i]->setBounds(10,runningHeight,chordProContainer.getWidth() / columns, 0);
             }
         }
-        chordProContainer.setBounds(viewportRight.getX(), viewportRight.getY(), viewportRight.getWidth() - 10, runningHeight);
+        if (chordProTwoColumns && !chordProImagesOnly) {
+            chordProContainer.setBounds(viewportRight.getX(), viewportRight.getY(), viewportRight.getWidth() - 10, jmax(viewportRight.getHeight(), viewportRight.getHeight() * (pageIndex + 1) ));
+        } else {
+            chordProContainer.setBounds(viewportRight.getX(), viewportRight.getY(), viewportRight.getWidth() - 10, jmax(viewportRight.getHeight(), (int)runningHeight));
+        }
     }
     viewportRight.setViewPosition(viewRightPos);
 }
@@ -993,6 +1032,7 @@ void ExtensionWindow::setFitToPageHeight(bool fitToHeight) {
 void ExtensionWindow::setDisplayTwoPages(bool display) {
     extension->preferences->setProperty("DisplayTwoPages", display); 
     extension->chordProTwoColumns = display;
+    chordProTwoColumnsExtern = display && !extension->chordProImagesOnly;
 }
 
 void ExtensionWindow::chordProSetLeftMarginLabels(bool onLeft) {
@@ -1450,6 +1490,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     {
         displaySongPanel = !displaySongPanel;
         setSongPanelPosition(displaySongPanel);
+        resized();
     } else if (buttonThatWasClicked == pinUnpinnedButton.get() || buttonThatWasClicked == pinPinnedButton.get()) {
         bool newPinnedStatus = !(extension->extensionWindow->isAlwaysOnTop());
         windowPinned = newPinnedStatus;
@@ -1470,7 +1511,6 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         windowFullscreen = newFullscreenStatus;
         fullscreenActivateButton->setVisible(!newFullscreenStatus);
         fullscreenDeactivateButton->setVisible(newFullscreenStatus);
-
         resized();
     } else if (buttonThatWasClicked->getProperties()["type"] == "button") {
         if (!buttonThatWasClicked->getToggleState()) return;
@@ -1974,6 +2014,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     firstSectionLine = false;
                 }
                 extension->chordProLines[i]->setText(directiveValue, dontSendNotification);
+                extension->chordProLines[i]->getProperties().set("originalText", directiveValue); 
             } else { // Not directive line
                 if (tabLine) {
                     extension->chordProLines[i]->setLookAndFeel(extension->chordProTabLnF);
@@ -2154,6 +2195,7 @@ void ExtensionWindow::chordProDisplayGUI(bool display) {
         extension->chordProContainer.setVisible(true);
         extension->chordProSetColors();
         extension->chordProSetTranspose(chordProTranspose);
+        chordProTwoColumnsExtern = extension->chordProTwoColumns && !extension->chordProImagesOnly;
     } else {
         missingImageContainer.setVisible(false);
         if (!chordProForCurrentSong) {
@@ -2434,7 +2476,6 @@ void ExtensionWindow::setSongPanelPosition(bool display) {
     extension->container.setBounds(extension->container.getBounds().withWidth(newWidth));
     extension->sidePanelCloseButton->setVisible(display);
     extension->sidePanelOpenButton->setVisible(!display);
-    extension->setSongPanelToFloating(!display);
     extension->resized();
 }
 

@@ -16,6 +16,7 @@
 using namespace juce;
 
 extern Colour viewPortBackground;
+extern bool chordProTwoColumnsExtern;
 
 class MyDraggableComponent : public Component 
 {
@@ -103,8 +104,38 @@ class ChordProContainer : public Component
 {
 public:
   void mouseDown (const MouseEvent& e) override;
-
+  void paint(Graphics& g) override {
+    Colour pageNumberColour = Colours::lightgrey;
+    if (chordProTwoColumnsExtern) {
+      if (viewPortBackground == Colour::fromString(CP_DARK_BACKGROUND_COLOR)){
+        g.setColour(Colour(0xff2a2a2a));
+        pageNumberColour = Colours::darkgrey;
+      } else  {
+         g.setColour(Colour(0xfff0f0f0));
+      }
+      // Vertical page separator
+      g.fillRect(getWidth() / 2, 0, 5, getHeight());
+      // Horizontal page separators
+      int height = getHeight();
+      int windowHeight = getParentComponent()->getHeight();
+      int separatorCount = (int)(height / windowHeight);
+      for (int i = 0; i < separatorCount; ++i) { 
+        int y = windowHeight * (i + 1) - 3;
+        g.fillRect(0, y, getWidth(), 5);
+      }
+      // Page numbers
+      g.setFont(Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
+      g.setColour(pageNumberColour);
+      for (int i = 0; i < separatorCount * 2; ++i) { 
+        int x = (i % 2 + 1) * getWidth() / 2 - 30;
+        int y = (floor(i / 2) + 1) * windowHeight - 30;
+        auto bounds = Rectangle(x, y, 30, 20);
+        g.drawFittedText( String(i + 1), bounds, juce::Justification::centred, 1, 1.0f);
+      }
+    }
+  }
 };
+
 
 class ChordProEditorContainer : public Component
 {
