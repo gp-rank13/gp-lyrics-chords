@@ -15,6 +15,13 @@ float chordProFontSize = CP_DEFAULT_FONT_SIZE;
 int headerHeight = HEADER_HEIGHT;
 int chordProTopPadding = CP_TOP_PADDING;
 int chordProTranspose = 0;
+int64 chordProScrollStart = 0;
+int64 chordProRunningPause = 0;
+int64 chordProTotalPause = 0;
+int chordProPreHeight = 0;
+int chordProLyricsChordHeight = 0;
+float chordProAutoScrollBaseAdjustment = 0.0;
+float chordProAutoScrollLastAdjustment = 0.0;
 FLAT_SHARP_DISPLAY chordProTransposeDisplay = original;
 bool chordProMonospaceFont = false;
 bool chordProSmallChordFont = false;
@@ -245,6 +252,15 @@ ExtensionWindow::ExtensionWindow ()
     editorCloseButton->setTooltip("Close editor");
     editorCloseButton->addListener (this);
     editorHeaderContainer.addAndMakeVisible (editorCloseButton.get());
+
+    Path p19;
+    p19.loadPathFromData (playPathData, sizeof (playPathData));
+    p19.applyTransform(juce::AffineTransform::verticalFlip(0));
+    playButton.reset (new IconButton ());
+    playButton->setShape (p19, true, true, false);
+    playButton->setTooltip("Start Autoscroll");
+    playButton->addListener (this);
+    addChildComponent (playButton.get());
 
     setlistButton.reset (new TextButton ("All Songs"));
     setlistButton->setLookAndFeel(setlistButtonLnF);
@@ -603,6 +619,9 @@ void ExtensionWindow::resized()
     int iconH = header->getHeight();
     auto iconBounds = Rectangle(iconX, iconY, iconW, iconH);
 
+    playButton->setVisible(chordProForCurrentSong && chordProSongScroll);
+    playButton->setBounds(iconBounds.withSizeKeepingCentre(22,22).withX(clock->getBounds().getX() - iconW));
+
     preferencesButton->setVisible(preferencesButton->getX() > headerLabelWidth + 30);
     preferencesButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
     
@@ -784,7 +803,6 @@ void ExtensionWindow::resized()
         float padding = chordProImagesOnly ? chordProContainer.getWidth() * 0.005 : 0.0;
         int imageCount = chordProGetVisibleImageCount();
         if (!chordProImagesOnly) runningHeight += chordProTopPadding;
-
         for (auto i = 0; i < chordProLines.size(); ++i) {
             if (chordProLines[i]->isVisible() && !(chordProImagesOnly && chordProLines[i]->getProperties()["type"] == "")) {
                 if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics") {
@@ -1720,6 +1738,19 @@ void ExtensionWindow::finalize()
     }
 }
 
+void ExtensionWindow::playheadChange(bool playing) {
+    if (playing && extension->chordProSongScroll) {
+        logToGP("Scroll song");
+        logToGP("Duration: " + std::to_string(extension->chordProSongScrollDuration));
+        extension->chordProCalculateAutoScroll();
+        extension->viewportRight.setViewPosition(0,0);
+        chordProScrollStart = juce::Time::getCurrentTime().toMilliseconds();
+        extension->songScrollTimer.startTimer(50);
+    } else {
+        if (extension->songScrollTimer.isTimerRunning()) extension->songScrollTimer.stopTimer();
+    }
+}
+
 void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
     setZeroBasedNumbering(prefs.getValue("ZeroBasedNumbers", "") == "true" ? true : false);
     setLargeScrollArea(prefs.getValue("LargeScrollArea", "") == "true" ? true : false);
@@ -1827,6 +1858,131 @@ void ExtensionWindow::chordProScrollWindow(double value) {
     int newY = (int) (value * (double) deltaH);
     viewportPosition.setY(newY);
     extension->viewportRight.setViewPosition(viewportPosition);
+}
+
+void ExtensionWindow::chordProAutoScrollWindow(double value) {
+    // Don't begin scrolling immediately - dependent on viewable area
+    Point<int> viewportPosition = extension->viewportRight.getViewPosition();
+    Rectangle<int> viewportBounds = extension->viewportRight.getViewArea();
+    Rectangle<int> containerBounds = extension->chordProContainer.getBounds();
+    float pages = (float)containerBounds.getHeight() / (float)viewportBounds.getHeight();
+    //float pageHeight = (float)containerBounds.getHeight() / pages;
+    //int currentPage = std::floor(value * pages);
+    
+    float pageOffset = 1.0f / pages * (extension->chordProTwoColumns ? 1.0f : 0.25f);
+
+    // Further adjust for any content before the first lyrics/chords/grids
+    float preAdjust = (float)chordProPreHeight / (float)containerBounds.getHeight();
+    pageOffset -= preAdjust;
+    
+    // Only start part-way through the first page
+    //if (value >= pageOffset) {
+        float adjustment = value;
+        //float adjustment = (value - pageOffset) * value * (1.0f / (1.0f - pageOffset)); 
+        // Scale to finish scrolling half page early
+        //adjustment = pages > 1.0 ? adjustment : adjustment * (pages / (pages - 1.0));
+        // Scale to account for amount of non Lyrics/Chords height
+        //adjustment = adjustment * ((float)containerBounds.getHeight() / (float)chordProLyricsChordHeight);
+
+        // Scale to account for the content on the current page
+        int currentPage = std::floor(adjustment * pages);
+        adjustment *= chordProAutoScrollBaseAdjustment;
+        if (currentPage < extension->chordProPageScrollAdjustment.size()) {
+            adjustment *= extension->chordProPageScrollAdjustment[currentPage];
+        } else {
+            adjustment *= extension->chordProPageScrollAdjustment[extension->chordProPageScrollAdjustment.size() - 1];
+        }
+        extension->logToGP("Value: " + std::to_string(value) + ", Page: " + std::to_string(currentPage) + ", Page Adjust: " + std::to_string(extension->chordProPageScrollAdjustment[currentPage]) + ", Adjustment: " + std::to_string(adjustment));
+
+
+        for (int i = 0; i < (int)extension->chordProPause.size(); ++i) { 
+            if (viewportPosition.getY() >= extension->chordProPause[i].first) {
+                extension->logToGP("Pause: " + std::to_string(extension->chordProPause[i].second));
+                chordProRunningPause += extension->chordProPause[i].second;
+                extension->songScrollTimer.stopTimer();
+                extension->songScrollPauseTimer.startTimer(extension->chordProPause[i].second);
+                extension->chordProPause.erase(extension->chordProPause.begin());
+                extension->resized();
+                break;
+            }
+        }
+        if (adjustment > chordProAutoScrollLastAdjustment) {
+             chordProScrollWindow(adjustment);
+             chordProAutoScrollLastAdjustment = adjustment;
+        }
+       
+    //}
+/*
+    int deltaH = containerBounds.getHeight() - viewportBounds.getHeight();
+    deltaH = (deltaH < 0) ? 0 : deltaH;
+    int newY = (int) (value * (double) deltaH);
+    viewportPosition.setY(newY);
+    extension->viewportRight.setViewPosition(viewportPosition);
+*/
+}
+
+void ExtensionWindow::chordProCalculateAutoScroll() {
+    chordProPausePositions.clear();
+    chordProPageLyricsChordsCount.clear();
+    chordProPageScrollAdjustment.clear();
+    chordProPause.clear();
+    chordProRunningPause = 0;
+    chordProTotalPause = 0;
+    chordProPreHeight = 0;
+    chordProLyricsChordHeight = 0;
+    int runningHeight = chordProTopPadding;
+    int pageCount = 1;
+    int pageContentRowCount = 0;
+    int pageContentRowCountTotal = 0;
+    int pageContentRowCountMax = 0;
+    Rectangle<int> viewportBounds = extension->viewportRight.getViewArea();
+    Rectangle<int> containerBounds = extension->chordProContainer.getBounds();
+    float pages = (float)containerBounds.getHeight() / (float)viewportBounds.getHeight();
+    int pageHeight = (float)containerBounds.getHeight() / pages;
+    extension->logToGP("Container Height: " + std::to_string(containerBounds.getHeight()) + ", Pages: " + std::to_string(pages) + ", Page Height: " + std::to_string(pageHeight));
+
+    // Calculate various heights/counts for determining the scroll speed
+    for (auto i = 0; i < chordProLines.size(); ++i) {
+        if (chordProLines[i]->isVisible()) {
+            int height = chordProLines[i]->getHeight();
+            runningHeight += height;
+            if (runningHeight > pageHeight * pageCount) {
+                chordProPageLyricsChordsCount.add(pageContentRowCount);
+                extension->logToGP("Page " + std::to_string(pageCount) + ": " + std::to_string(pageContentRowCount));
+                pageCount++;
+                pageContentRowCountTotal += pageContentRowCount;
+                if (pageContentRowCount > pageContentRowCountMax) 
+                    pageContentRowCountMax = pageContentRowCount;
+                pageContentRowCount = 0;
+            }
+            if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics"
+                || chordProLines[i]->getProperties()["type"] == "chordOnly"
+                || chordProLines[i]->getProperties()["type"] == "lyricOnly"
+                || chordProLines[i]->getProperties()["type"] == "grid") {
+                if (chordProPreHeight == 0) {
+                    chordProPreHeight = runningHeight - height;
+                }
+                chordProLyricsChordHeight += height;
+                pageContentRowCount++;
+            }
+
+        }
+        if (chordProLines[i]->getProperties()["type"] == "pause") {
+            // Store the pause position
+            int pauseLength = chordProLines[i]->getProperties()["pauseLength"].toString().getIntValue();
+            chordProPause.push_back(std::make_pair(runningHeight, pauseLength * 1000));
+            chordProTotalPause += (pauseLength * 1000);
+        }
+    }
+    // Calculate the per-page scroll speed adjustment
+    chordProAutoScrollBaseAdjustment = (float)pageContentRowCountTotal / ((float)(pageContentRowCountMax) * (float)chordProPageLyricsChordsCount.size());
+    logToGP("Base Adjustment: " + std::to_string(chordProAutoScrollBaseAdjustment));
+    for (auto i = 0; i < chordProPageLyricsChordsCount.size(); ++i) {
+        float adjustment = 1.0f / ((float)chordProPageLyricsChordsCount[i] / (float)pageContentRowCountMax);
+        chordProPageScrollAdjustment.add(adjustment);
+        logToGP("Page " + std::to_string(i+1) + " Adjustment: " + std::to_string(adjustment));
+    }
+    logToGP("Visible Height: " + std::to_string(runningHeight) + ", Lyrics/Chords Height: " + std::to_string(chordProLyricsChordHeight) + ", Pre Height: " + std::to_string(chordProPreHeight));
 }
 
 void ExtensionWindow::chordProUp() {
@@ -1975,6 +2131,23 @@ void ExtensionWindow::chordProProcessText(std::string text) {
                     } else if (directiveName == "transpose") {
                         transpose = directiveValue.getIntValue();
                         extension->chordProLines[i]->setVisible(false);
+                    } else if (directiveName  == "duration") {
+                        extension->chordProSongScroll = true;
+                        StringArray durationParts = StringArray::fromTokens(line,":",""); // Split minutes and seconds
+                        int seconds = 0;
+                        if (durationParts.size() == 2) { // Seconds only
+                            seconds = durationParts[1].trim().getIntValue();
+                        } else  {
+                            seconds = durationParts[1].trim().getIntValue() * 60;
+                            seconds += durationParts[2].trim().getIntValue(); 
+                        }
+                        extension->chordProSongScrollDuration = seconds;
+                        extension->chordProLines[i]->setVisible(false);
+                    } else if (directiveName == "x_gp_pause") {
+                        extension->chordProLines[i]->getProperties().set("type", "pause");
+                        extension->chordProLines[i]->getProperties().set("pauseLength", directiveValue);
+                        extension->chordProLines[i]->setVisible(false);
+
                     } else {
                         extension->chordProLines[i]->setLookAndFeel(extension->chordProSubTitleLnF);
                         extension->chordProLines[i]->getProperties().set("type", "other"); 
@@ -2143,6 +2316,7 @@ void ExtensionWindow::chordProReadFile(int index) {
     if (lib == nullptr) return;
     std::string chordProFileText;
     std::string chordProFile = lib->getChordProFilenameForSong(index);
+    logToGP("ChordPro File: " + chordProFile);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
     extension->editorTextChangedCount = 0;
     extension->editorTextEdited = false;
@@ -2151,12 +2325,16 @@ void ExtensionWindow::chordProReadFile(int index) {
     if (extension->chordProForCurrentSong) {
         File chordProFullPath = File(chordProFile);
         if (chordProFullPath.existsAsFile()) {
+            logToGP("ChordPro File Exists");
             gigperformer::sdk::GPUtils::loadTextFile(chordProFullPath.getFullPathName().toStdString(), chordProFileText);
+            logToGP(chordProFullPath.getFullPathName().toStdString());
             chordProProcessText(chordProFileText);  
+            logToGP(chordProFileText);
             extension->chordProEditor->setText(chordProFileText, false);
             extension->noChordProLabel->setVisible(false);
             extension->viewportRight.setViewPosition(0,0);
         } else {
+            logToGP("ChordPro File Doesn't Exist");
             extension->chordProForCurrentSong = false;
         }
     }
@@ -2174,6 +2352,7 @@ void ExtensionWindow::chordProReset() {
 
     missingImageContainer.setVisible(false);
     extension->chordProImagesOnly = false;
+    extension->chordProSongScroll = false;
     extension->noChordProLabel->setVisible(true);
 }
 
@@ -2723,6 +2902,25 @@ void CreateImageTimer::timerCallback() {
 void WindowChangeTimer::timerCallback() {
     ExtensionWindow::savePreferences();
     this->stopTimer();
+}
+
+void SongScrollTimer::hiResTimerCallback() {
+    int64 time = juce::Time::getCurrentTime().toMilliseconds();
+    if ( time - chordProScrollStart - chordProRunningPause + chordProTotalPause > ExtensionWindow::extension->chordProSongScrollDuration * 1000) {
+        this->stopTimer();
+        ExtensionWindow::extension->chordProScrollWindow(1.0);
+        ExtensionWindow::logToGP("End scroll");
+        ExtensionWindow::extension->resized();
+
+    } else {
+        ExtensionWindow::extension->chordProAutoScrollWindow(float(time - chordProScrollStart - chordProRunningPause + chordProTotalPause) / float(ExtensionWindow::extension->chordProSongScrollDuration * 1000));
+    }
+}
+
+void SongScrollPauseTimer::hiResTimerCallback() {
+    this->stopTimer();
+    ExtensionWindow::extension->songScrollTimer.startTimer(50);
+
 }
 
 bool MyDocumentWindow::keyPressed(const KeyPress& key)

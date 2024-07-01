@@ -457,6 +457,7 @@ public:
   void static processPreferencesChordProColors(StringPairArray prefs);
   void static processPreferencesWindowState(StringPairArray prefs);
   void static removeColorKeywordFromName(bool remove);
+  void static playheadChange(bool playing);
   void static refreshUI();
   void static setWindowPositionAndSize(int x, int y, int w, int h);
   void static setSongLabel();
@@ -475,7 +476,6 @@ public:
   bool static isActiveSearch();
   void static filterButtons(String text);
 
-
   Image static getWindowIcon();
   void mouseDrag ( const MouseEvent& ) override
     {
@@ -483,6 +483,7 @@ public:
     }
   
   void static chordProScrollWindow(double value);
+  void static chordProAutoScrollWindow(double value);
   void static chordProUp();
   void static chordProDown();
   void static chordProProcessText(std::string text);
@@ -535,11 +536,18 @@ public:
   SharedResourcePointer<chordProEditorLookAndFeel> chordProEditorLnF;
   bool prefsLoaded = false;
   int editorTextChangedCount = 0;
+  int chordProSongScrollDuration = 0;
+  Array<int> chordProPausePositions; 
+  std::vector<std::pair<int,int>> chordProPause;
+  SongScrollTimer songScrollTimer;
+  SongScrollPauseTimer songScrollPauseTimer;
+  
 
  private:
   void log(String text);
   void chordProReset();
   void chordProUpdateDiagramColors();
+  void chordProCalculateAutoScroll();
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
@@ -579,16 +587,20 @@ public:
   OwnedArray<ChordDiagramFretboard> chordProDiagramFretboard;
   StringPairArray buttonColors;
   StringPairArray chordProColors;
+  Array<int> chordProPageLyricsChordsCount; 
+  Array<float> chordProPageScrollAdjustment;
   ClockTimer clockTimer;
   RefreshTimer refreshTimer;
   CaratTimer caratTimer;
   CreateImageTimer imageTimer;
+
   bool displayRightPanel = true;
   bool displaySongPanel = true;
   bool displayWindowOnLoad = false;
   bool chordProForCurrentSong = false;
   bool chordProImagesOnly = false;
   bool chordProTwoColumns = false;
+  bool chordProSongScroll = false;
   bool fitHeight = false;
   bool pendingDisplayWindow = false;
   bool windowPinned = false;
@@ -644,6 +656,8 @@ public:
   std::unique_ptr<IconButton> searchButton;
   std::unique_ptr<IconButton> editButton;
   std::unique_ptr<IconButton> editorCloseButton;
+  std::unique_ptr<IconButton> playButton;
+  std::unique_ptr<IconButton> pauseButton;
   std::unique_ptr<ChordProEditor> chordProEditor;
   Image menuIcon;
   ImageComponent menuIconComponent;

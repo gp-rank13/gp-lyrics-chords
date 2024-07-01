@@ -267,6 +267,10 @@ void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValu
     } 
 }
 
+void LibMain::OnGlobalPlayStateChanged(double playing) {
+    ExtensionWindow::playheadChange(playing > 0.0);
+}
+
 std::string LibMain::GetProductDescription()
 {
     return XMLProductDescription;
