@@ -2314,7 +2314,8 @@ void ExtensionWindow::chordProProcessText(std::string text) {
 
 void ExtensionWindow::chordProReadFile(int index) {
     if (lib == nullptr) return;
-    std::string chordProFileText;
+    //std::string chordProFileText;
+    String chordProFileText;
     std::string chordProFile = lib->getChordProFilenameForSong(index);
     logToGP("ChordPro File: " + chordProFile);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
@@ -2326,10 +2327,11 @@ void ExtensionWindow::chordProReadFile(int index) {
         File chordProFullPath = File(chordProFile);
         if (chordProFullPath.existsAsFile()) {
             logToGP("ChordPro File Exists");
-            gigperformer::sdk::GPUtils::loadTextFile(chordProFullPath.getFullPathName().toStdString(), chordProFileText);
+            //gigperformer::sdk::GPUtils::loadTextFile(chordProFullPath.getFullPathName().toStdString(), chordProFileText);
+            chordProFileText = chordProFullPath.loadFileAsString();
             logToGP(chordProFullPath.getFullPathName().toStdString());
-            chordProProcessText(chordProFileText);  
-            logToGP(chordProFileText);
+            chordProProcessText(chordProFileText.toStdString());  
+            logToGP(chordProFileText.toStdString());
             extension->chordProEditor->setText(chordProFileText, false);
             extension->noChordProLabel->setVisible(false);
             extension->viewportRight.setViewPosition(0,0);
