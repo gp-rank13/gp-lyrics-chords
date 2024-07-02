@@ -485,7 +485,7 @@ public:
   void static chordProScrollWindow(double value);
   void static chordProUp();
   void static chordProDown();
-  void static chordProProcessText(std::string text);
+  void static chordProProcessText(String text);
   void static chordProReadFile(int index);
   void static chordProScrollToSongPart(std::string text);
   void chordProDisplayGUI(bool display);

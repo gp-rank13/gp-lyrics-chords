@@ -1657,7 +1657,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         updatePreferencesColors();
         savePreferences();
         if (chordProForCurrentSong) {
-            chordProProcessText(chordProEditor->getText().toStdString());
+            chordProProcessText(chordProEditor->getText());
         } else {
             preferencesContainer.setVisible(false);
             viewportRight.setViewedComponent(&extension->containerRight, false);
@@ -1852,7 +1852,7 @@ void ExtensionWindow::chordProScrollToSongPart(std::string songPartName) {
     }
 }
 
-void ExtensionWindow::chordProProcessText(std::string text) {
+void ExtensionWindow::chordProProcessText(String text) {
     StringArray lines = StringArray::fromLines(text);
     String line;
     int firstLineWithContent = false;
@@ -2141,7 +2141,7 @@ void ExtensionWindow::chordProProcessText(std::string text) {
 
 void ExtensionWindow::chordProReadFile(int index) {
     if (lib == nullptr) return;
-    std::string chordProFileText;
+    String chordProFileText;
     std::string chordProFile = lib->getChordProFilenameForSong(index);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
     extension->editorTextChangedCount = 0;
@@ -2151,7 +2151,7 @@ void ExtensionWindow::chordProReadFile(int index) {
     if (extension->chordProForCurrentSong) {
         File chordProFullPath = File(chordProFile);
         if (chordProFullPath.existsAsFile()) {
-            gigperformer::sdk::GPUtils::loadTextFile(chordProFullPath.getFullPathName().toStdString(), chordProFileText);
+            chordProFileText = chordProFullPath.loadFileAsString();
             chordProProcessText(chordProFileText);  
             extension->chordProEditor->setText(chordProFileText, false);
             extension->noChordProLabel->setVisible(false);
@@ -2408,7 +2408,7 @@ void ExtensionWindow::chordProCreateInvertedImages() {
 
 void ExtensionWindow::chordProEditorUpdate() {
     extension->editorTextEdited = true;
-    extension->chordProProcessText(extension->chordProEditor->getText().toStdString());
+    extension->chordProProcessText(extension->chordProEditor->getText());
 }
 
 void ExtensionWindow::log(String text) {
