@@ -430,21 +430,23 @@ ExtensionWindow::ExtensionWindow ()
     menuIconComponent.setSize(16,16);
     menuIconComponent.setInterceptsMouseClicks(false,false);
     
+    setlistHeaderContainer.addAndMakeVisible(setlistButton.get());
+    setlistHeaderContainer.addAndMakeVisible(menuIconComponent);
+    addChildComponent(noSongsLabel.get());
+
+    containerRight.addChildComponent(noChordProLabel.get());
+    containerEditor.addAndMakeVisible(editorHeaderContainer);
+    container.setWantsKeyboardFocus(false);
+
     addAndMakeVisible(viewport);
     addAndMakeVisible(viewportRight);
     addChildComponent(floatingViewport);
-    setlistHeaderContainer.addAndMakeVisible(setlistButton.get());
-    setlistHeaderContainer.addAndMakeVisible(menuIconComponent);
-    addChildComponent(setlistContainer);
+
     addAndMakeVisible(setlistHeaderContainer);
     addChildComponent(fontButtonContainer);
     addChildComponent(missingImageContainer);
     addChildComponent(transposeContainer);
     addChildComponent(searchContainer);
-    addChildComponent(noSongsLabel.get());
-    containerRight.addChildComponent(noChordProLabel.get());
-    containerEditor.addAndMakeVisible(editorHeaderContainer);
-    container.setWantsKeyboardFocus(false);
 
     chordProEditor.reset(new ChordProEditor());
     containerEditor.addAndMakeVisible(chordProEditor.get());
@@ -692,7 +694,7 @@ void ExtensionWindow::resized()
         }
     }
 
-    container.setBounds(0, 50, juce::jmax (minWindowWidth-10, x - 10), headerHeight + (buttonHeight * rowCount) + padding);
+    container.setBounds(0, headerHeight, juce::jmax (minWindowWidth-10, x - 10), headerHeight + (buttonHeight * rowCount) + padding);
     if (searchContainer.isVisible() && !displaySongPanel) container.setBounds(0, 50, DEFAULT_SONG_LIST_WIDTH - 10, headerHeight + (buttonHeight * rowCount) + padding);
     containerRight.setBounds(juce::jmax (minWindowWidth-10, x - 10), headerHeight, getWidth()- juce::jmax (minWindowWidth, x), getHeight() - headerHeight);
     
@@ -768,13 +770,21 @@ void ExtensionWindow::resized()
         setlistButton->setBounds(0, 0, DEFAULT_SONG_LIST_WIDTH, headerHeight);
 
     menuIconComponent.setBounds(setListWidth - 30, (headerHeight / 2) - 6, 8, 12);
-    setlistContainer.setBounds(0, headerHeight * 2, setListWidth, getHeight());
     for (int i = 0; i < setlistButtons.size(); ++i) {
         if (setlistButtons[i]->isVisible()) {
             setlistButtons[i]->setBounds(0, (buttonHeight * setlistCount), setListWidth, buttonHeight);
             setlistCount++;
         }
     }
+    int w = setListWidth;
+    int h1 = getHeight() - headerHeight;
+    int h2 = headerHeight + (buttonHeight * setlistCount) + (int)padding;
+    if (h2 > h1) {
+        w -= 10;
+        h1 = h2;
+    }
+    setlistContainer.setBounds(0, headerHeight * 2, w, h1);
+
     // ChordPro
     if (chordProForCurrentSong && viewportRight.isVisible()) {
         float runningHeight = 0.0;
@@ -1263,6 +1273,24 @@ void ExtensionWindow::addButtons(int count) {
     }
 }
 
+void ExtensionWindow::addSetlistButtons(int count) {
+    int buttonCount = extension->setlistButtons.size();
+    int index;
+    for (auto i = 0; i < count; ++i) {
+        index = buttonCount + i;
+        std::string number = std::to_string(index);
+        auto button = new TextButton(number); 
+        extension->setlistButtons.add(button);
+        extension->setlistButtons[index]->setLookAndFeel(extension->setlistListButtonLnF);
+        extension->setlistButtons[index]->setClickingTogglesState(true);
+        extension->setlistButtons[index]->setRadioGroupId(3);
+        extension->setlistButtons[index]->getProperties().set("type", "setlistButton"); 
+        extension->setlistButtons[index]->setTriggeredOnMouseDown(true);
+        extension->setlistButtons[index]->addListener(extension);  
+        extension->setlistContainer.addAndMakeVisible(extension->setlistButtons[index]);
+    }
+}
+
 void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
     int newButtonCount = buttonNames.size();
     int currentButtonCount = extension->buttons.size();
@@ -1399,11 +1427,14 @@ std::string ExtensionWindow::getSubButtonNameByIndex(int index, int subIndex) {
 void ExtensionWindow::updateSetlistButtons(std::vector<std::string> buttonNames) {
     String name = lib->getSetlistName(lib->getCurrentSetlistIndex());
     extension->setlistButton->setButtonText(name);
-    extension->setlistContainer.setVisible(false);
-
-    int buttonCount  = buttonNames.size();
-    for (auto i = 0; i < extension->setlistButtons.size(); ++i) {
-        if (i < buttonCount) {
+    int newButtonCount = buttonNames.size();
+    int currentButtonCount = extension->setlistButtons.size();
+    if (newButtonCount > currentButtonCount) {
+        addSetlistButtons(newButtonCount-currentButtonCount);
+        currentButtonCount = newButtonCount;
+    }
+    for (auto i = 0; i < currentButtonCount; ++i) {
+        if (i < newButtonCount) {
             extension->setlistButtons[i]->setButtonText(buttonNames[i]);
             extension->setlistButtons[i]->setVisible(true);
         } else {
@@ -1633,10 +1664,12 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         extension->repaint();
         imageTimer.startTimer(TIMER_IMAGE_CONVERT);
     } else if (buttonThatWasClicked == setlistButton.get()) {
-        setlistContainer.setVisible(!setlistContainer.isVisible());
-         if (!lib->inSetlistMode()) lib->switchToSetlistView();
+        toggleSetlistContainer();
+        if (!lib->inSetlistMode()) lib->switchToSetlistView();
     } else if (buttonThatWasClicked->getProperties()["type"] == "setlistButton" && buttonThatWasClicked->getToggleState()) {       
         lib->switchToSetlist(buttonThatWasClicked->getName().getIntValue());
+        displaySetlistContainer(false);
+        compareButtonNames(lib->getSongNames());
     } else if (buttonThatWasClicked == prefButtons[0]) {
         toggleZeroBasedNumbering();
     } else if (buttonThatWasClicked == prefButtons[1]) {
@@ -2426,10 +2459,11 @@ void ExtensionWindow::displayFontContainer(bool display) {
     extension->fontButtonContainer.setVisible(display);
 }
 
+/*
 void ExtensionWindow::displaySetlistContainer(bool display) {
     extension->setlistContainer.setVisible(display);
 }
-
+*/
 void ExtensionWindow::displayTransposeContainer(bool display) {
     extension->transposeContainer.setVisible(display);
 }
@@ -2466,6 +2500,22 @@ void ExtensionWindow::displayPreferencesContainer(bool display) {
 void ExtensionWindow::displayEditorContainer(bool display) {
     extension->containerEditor.setVisible(display);
     extension->draggableResizerEditor.setVisible(display);
+}
+
+void ExtensionWindow::displaySetlistContainer(bool display) {
+    extension->viewport.setViewedComponent(display ? &extension->setlistContainer : &extension->container, false);
+}
+
+void ExtensionWindow::toggleSetlistContainer() {
+    bool display = false;
+    bool floatingSongList = (extension->searchContainer.isVisible() && !extension->displaySongPanel);
+    if (floatingSongList) {
+        display = (extension->floatingViewport.getViewedComponent() == &extension->container);
+        extension->floatingViewport.setViewedComponent(display ? &extension->setlistContainer : &extension->container, false);
+    } else {
+        display = (extension->viewport.getViewedComponent() == &extension->container);
+        extension->viewport.setViewedComponent(display ? &extension->setlistContainer : &extension->container, false);
+    }
 }
 
 void ExtensionWindow::setSongPanelPosition(bool display) {

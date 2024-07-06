@@ -402,6 +402,7 @@ public:
   void closeWindow();
   void static updateButtonLabel(const String& label);
   void static addButtons(int count);
+  void static addSetlistButtons(int count);
   void static updateButtonNames(std::vector<std::string> buttonNames);
   void static compareButtonNames(std::vector<std::string> buttonNames);
   void static addSubButtons(int count);
@@ -461,11 +462,12 @@ public:
   void static setWindowPositionAndSize(int x, int y, int w, int h);
   void static setSongLabel();
   void static displayFontContainer(bool display);
-  void static displaySetlistContainer(bool display);
   void static displayTransposeContainer(bool display);
   void static displaySearchContainer(bool display);
   void static displayPreferencesContainer(bool display);
   void static displayEditorContainer(bool display);
+  void static displaySetlistContainer(bool display);
+  void static toggleSetlistContainer();
   void static logToGP(std::string text);
   void static songSearch(String searchCharacter, bool append);
   void static songSearchBackspace();
