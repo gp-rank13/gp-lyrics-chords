@@ -22,6 +22,7 @@ bool chordProLeftLabels = false;
 bool chordProDarkMode = false;
 bool chordProTwoColumnsExtern = false;
 bool lockToSetlistMode = false;
+bool autoscrollPanelPersist = false;
 bool displayVariationsForSong = false;
 bool searchCaratOn = true;
 extern std::string extensionPath;
@@ -51,7 +52,7 @@ ExtensionWindow::ExtensionWindow ()
     on.setImage(toggleOn);
     off.setImage(toggleOff);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 7; ++i) {
         auto button = new DrawableButton(std::to_string(i), DrawableButton::ImageFitted);
         prefButtons.add(button);
         prefButtons[i]->setImages(&off, 0, 0, 0, &on);
@@ -246,6 +247,25 @@ ExtensionWindow::ExtensionWindow ()
     editorCloseButton->addListener (this);
     editorHeaderContainer.addAndMakeVisible (editorCloseButton.get());
 
+    Path p19;
+    p19.loadPathFromData (autoscrollPathData, sizeof (autoscrollPathData));
+    p19.applyTransform(juce::AffineTransform::verticalFlip(0));
+    autoscrollButton.reset (new IconButton ()); 
+    autoscrollButton->setShape (p19, true, true, false);
+    autoscrollButton->setTooltip("Show/hide autoscroll settings");
+    autoscrollButton->addListener (this);
+    addChildComponent (autoscrollButton.get());
+
+    Path p20;
+    p20.loadPathFromData (autoscrollResetPathData, sizeof (autoscrollResetPathData));
+    p20.applyTransform(juce::AffineTransform::verticalFlip(0));
+    autoscrollResetButtonIcon.reset (new IconButton ()); 
+    autoscrollResetButtonIcon->setShape (p20, true, true, false);
+    autoscrollResetButtonIcon->setTooltip("Scroll to top");
+    autoscrollResetButtonIcon->addListener (this);
+    autoscrollResetButtonIcon->setInterceptsMouseClicks(false, true);
+    //addChildComponent (autoscrollResetButtonIcon.get());
+
     setlistButton.reset (new TextButton ("All Songs"));
     setlistButton->setLookAndFeel(setlistButtonLnF);
     setlistButton->setButtonText ("All Songs");
@@ -301,6 +321,24 @@ ExtensionWindow::ExtensionWindow ()
     transposeLabel.reset (new Label ("Transpose","Transpose  0"));
     transposeLabel->setLookAndFeel(popOverLabelLnf);
 
+    autoscrollPlayButton.reset (new TextButton ("autoscrollPlay"));
+    autoscrollPlayButton->setLookAndFeel(popOverLnf);
+    autoscrollPlayButton->setButtonText (">");
+    autoscrollPlayButton->setClickingTogglesState(true);
+    autoscrollPlayButton->addListener (this);  
+
+    autoscrollResetButton.reset (new TextButton ("autoscrollReset"));
+    autoscrollResetButton->setLookAndFeel(popOverLnf);
+    autoscrollResetButton->setButtonText (" ");
+    autoscrollResetButton->addListener (this); 
+
+    autoscrollLabel.reset (new Label ("Autoscroll","Autoscroll"));
+    autoscrollLabel->setLookAndFeel(popOverLabelLnf);
+    autoscrollDurationLabel.reset (new Label ("AutoscrollDuration","00:00"));
+    autoscrollDurationLabel->setLookAndFeel(popOverLabelLnf);
+    autoscrollTimeLabel.reset (new Label ("AutoscrollTime","00:00 /"));
+    autoscrollTimeLabel->setLookAndFeel(popOverLabelLnf);
+
     editorSaveButton.reset (new TextButton ("Save"));
     editorSaveButton->setLookAndFeel(popOverLnf);
     editorSaveButton->setButtonText ("Save");
@@ -318,6 +356,13 @@ ExtensionWindow::ExtensionWindow ()
     transposeContainer.addAndMakeVisible(transposeSharp.get());
     transposeContainer.addAndMakeVisible(transposeFlat.get());
     transposeContainer.addAndMakeVisible(transposeLabel.get());
+
+    autoscrollContainer.addAndMakeVisible(autoscrollLabel.get());
+    autoscrollContainer.addAndMakeVisible(autoscrollPlayButton.get());
+    autoscrollContainer.addAndMakeVisible(autoscrollResetButton.get());   
+    autoscrollContainer.addAndMakeVisible(autoscrollResetButtonIcon.get());
+    autoscrollContainer.addAndMakeVisible(autoscrollTimeLabel.get());
+    autoscrollContainer.addAndMakeVisible(autoscrollDurationLabel.get());
 
     createInvertedImage.reset (new TextButton ("Create"));
     createInvertedImage->setLookAndFeel(popOverLnf);
@@ -447,6 +492,7 @@ ExtensionWindow::ExtensionWindow ()
     addChildComponent(missingImageContainer);
     addChildComponent(transposeContainer);
     addChildComponent(searchContainer);
+    addChildComponent(autoscrollContainer);
 
     chordProEditor.reset(new ChordProEditor());
     containerEditor.addAndMakeVisible(chordProEditor.get());
@@ -589,7 +635,7 @@ void ExtensionWindow::resized()
     int headerLabelWidth = headerLabelFont.getStringWidth(headerLabel);
     header->setBounds (0, 0, getWidth(), headerHeight);
     clock->setBounds (getWidth()/2 - 50, 0, 100, headerHeight);
-    clock->setVisible(((getWidth() > 790 && chordProForCurrentSong && !chordProImagesOnly)
+    clock->setVisible(((getWidth() > 860 && chordProForCurrentSong && !chordProImagesOnly)
         || (getWidth() > 730 && chordProForCurrentSong && chordProImagesOnly)
         || (getWidth() > 420 &&!chordProForCurrentSong)) 
         && clock->getX() > headerLabelWidth ? true : false);
@@ -598,6 +644,7 @@ void ExtensionWindow::resized()
     if (missingImageContainer.getX() < x + 5) missingImageContainer.setVisible(false);
     if (transposeContainer.getX() < x + 5) transposeContainer.setVisible(false);
     if (searchContainer.getX() < x + 5) searchContainer.setVisible(false);
+    if (autoscrollContainer.getX() < x + 5) autoscrollContainer.setVisible(false);
 
     int iconX = header->getBounds().getWidth() - 60;
     int iconY = header->getBounds().getY();
@@ -630,7 +677,11 @@ void ExtensionWindow::resized()
         editButton->setBounds(iconBoundsAdjusted.withY(iconBoundsAdjusted.getY() - 1));
         editButton->setVisible(chordProForCurrentSong && editButton->getX() > headerLabelWidth + 20);
 
-        iconBounds = iconBounds.withX(iconBounds.getX() - 40);
+        iconBounds = iconBounds.withX(iconBounds.getX() - 39);
+        autoscrollButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
+        autoscrollButton->setVisible(autoscrollButton->getX() > headerLabelWidth + 20);
+  
+        iconBounds = iconBounds.withX(iconBounds.getX() - 38);
         lightDarkModeButton->setBounds(iconBounds.withSizeKeepingCentre(22,22));
         lightDarkModeButton->setVisible(chordProForCurrentSong && lightDarkModeButton->getX() > headerLabelWidth + 20);
     }
@@ -660,7 +711,8 @@ void ExtensionWindow::resized()
         fitWidthButton->setVisible(fitHeight && chordProImagesOnly && fitWidthButton->getX() > headerLabelWidth + 20);
         fitHeightButton->setVisible(!fitHeight && chordProImagesOnly && fitHeightButton->getX() > headerLabelWidth + 20);
     }
-    iconBounds = iconBounds.withX(iconBounds.getX() - 40);
+
+    iconBounds = iconBounds.withX(iconBounds.getX() - 38);
     sidePanelCloseButton->setVisible(displaySongPanel && sidePanelCloseButton->getX() > headerLabelWidth + 30);
     sidePanelOpenButton->setVisible(!displaySongPanel && sidePanelOpenButton->getX() > headerLabelWidth + 30);
     sidePanelOpenButton->setBounds (iconBounds.withSizeKeepingCentre(22,22));
@@ -713,7 +765,8 @@ void ExtensionWindow::resized()
     missingImageContainer.setBounds(popOverRightX - rightPad - 360, headerHeight, 360, headerHeight);
     transposeContainer.setBounds(popOverRightX - rightPad - 400, headerHeight, 400, headerHeight);
     searchContainer.setBounds(popOverRightX - rightPad - 420, headerHeight, 420, headerHeight);
-    
+    autoscrollContainer.setBounds(popOverRightX - rightPad - 380, headerHeight, 380, headerHeight);
+
     searchBox->setBounds(100, 0, 310, headerHeight);
     noSongsLabel->setBounds(0, headerHeight * 4, x, 100);
     noChordProLabel->setBounds(0, headerHeight * 4, getWidth() - x, 100);
@@ -736,6 +789,13 @@ void ExtensionWindow::resized()
     transposeFlat->setBounds (280,5,50,headerHeight-10);
     transposeSharp->setBounds (340,5,50,headerHeight-10);
 
+    autoscrollLabel->setBounds (0, 0, 120, headerHeight);
+    autoscrollPlayButton->setBounds (120,5,50,headerHeight-10);
+    autoscrollResetButton->setBounds (180,5,50,headerHeight-10);
+    autoscrollResetButtonIcon->setBounds(autoscrollResetButton->getBounds().withSizeKeepingCentre(22,22));
+    autoscrollTimeLabel->setBounds (225, 0, 85, headerHeight);
+    autoscrollDurationLabel->setBounds (300, 0, 70, headerHeight);
+
     missingImageLabel->setBounds (0, 0, 260, headerHeight);
     createInvertedImage->setBounds (260, 5, 90, headerHeight-10);
 
@@ -756,9 +816,10 @@ void ExtensionWindow::resized()
     }
     prefButtons[4]->setBounds(50, 353, 40, 40);
     prefButtons[5]->setBounds(50, 388, 40, 40);
+    prefButtons[6]->setBounds(50, 423, 40, 40);
 
     for (int i = 0; i < 4; ++i) {
-        prefColorButtons[i]->setBounds(50, 440 + 35 * i, 80, 30);
+        prefColorButtons[i]->setBounds(50, 475 + 35 * i, 80, 30);
     }
 
     int setlistCount = 0;
@@ -865,6 +926,9 @@ void ExtensionWindow::resized()
                         bool display = (!chordProTwoColumns || (chordProTwoColumns && ((diagramX + diagramW - CP_FRETBOARD_SEPARATOR) < (viewportRight.getWidth() / columns)))); 
                         chordProDiagramFretboard[i]->setVisible(display);
                     }
+                } else if (chordProLines[i]->getName() == "autoscrollSpacer") {
+                    // Don't alter size
+                    rowHeight = chordProLines[i]->getHeight();
                 } else {
                     rowHeight = 40.0 * chordProFontSize;
                 }
@@ -1111,6 +1175,12 @@ void ExtensionWindow::toggleSmallChordFont() {
     extension->preferences->setProperty("SmallChordFont", !status);
     chordProSmallChordFont = !status;
     refreshUI();
+}
+
+void ExtensionWindow::toggleAutoscrollPanelPersist() {
+    bool status = extension->preferences->getProperty("AutoscrollPanelPersist");
+    extension->preferences->setProperty("AutoscrollPanelPersist", !status);
+    autoscrollPanelPersist = !status;
 }
 
 String ExtensionWindow::buttonName(int index) {
@@ -1616,11 +1686,24 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     } else if (buttonThatWasClicked == fontButton.get()) {
         transposeContainer.setVisible(false);
         displaySearchContainer(false);
+        displayAutoscrollContainer(false);
         fontButtonContainer.setVisible(!fontButtonContainer.isVisible());
         resized();
+    } else if (buttonThatWasClicked == autoscrollButton.get()) {
+        transposeContainer.setVisible(false);
+        displaySearchContainer(false);
+        displayFontContainer(false);
+        autoscrollContainer.setVisible(!autoscrollContainer.isVisible());
+        resized();
+    } else if (buttonThatWasClicked == autoscrollPlayButton.get()) {
+        chordProAutoScrollPlay(buttonThatWasClicked->getToggleState());
+        
+    } else if (buttonThatWasClicked == autoscrollResetButton.get()) {
+        chordProAutoScrollReset();        
     } else if (buttonThatWasClicked == transposeButton.get()) {
         fontButtonContainer.setVisible(false);
         displaySearchContainer(false);
+        displayAutoscrollContainer(false);
         transposeContainer.setVisible(!transposeContainer.isVisible());
         resized();
     } else if (buttonThatWasClicked == transposeDown.get()) {
@@ -1686,6 +1769,9 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     } else if (buttonThatWasClicked == prefButtons[5]) {
         toggleSmallChordFont();
         displayPreferencesContainer(true);
+    } else if (buttonThatWasClicked == prefButtons[6]) {
+        toggleAutoscrollPanelPersist();
+        displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == preferencesCloseButton.get()) {
         updatePreferencesColors();
         savePreferences();
@@ -1701,6 +1787,7 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
     } else if (buttonThatWasClicked == searchButton.get()) {
         fontButtonContainer.setVisible(false);
         transposeContainer.setVisible(false);
+        displayAutoscrollContainer(false);
         displaySearchContainer(!searchContainer.isVisible());
         resized();
     } 
@@ -1768,7 +1855,7 @@ void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
     chordProSetFontSize(fontSize == "0" ? CP_DEFAULT_FONT_SIZE : fontSize.getFloatValue());
     chordProSetLeftMarginLabels(prefs.getValue("LeftMarginLabels", "") == "true" ? true : false); 
     chordProSetSmallChordFont(prefs.getValue("SmallChordFont", "") == "true" ? true : false); 
-
+    chordProSetAutoscrollPanelPersist(prefs.getValue("AutoscrollPanelPersist", "") == "true" ? true : false); 
     extension->updatePreferencesWindow();
 }
 
@@ -1819,6 +1906,8 @@ void ExtensionWindow::updatePreferencesWindow() {
      extension->prefButtons[4]->setToggleState(status, dontSendNotification);
      status = extension->preferences->getProperty("SmallChordFont");
      extension->prefButtons[5]->setToggleState(status, dontSendNotification);
+     status = extension->preferences->getProperty("AutoscrollPanelPersist");
+     extension->prefButtons[6]->setToggleState(status, dontSendNotification);
 
     // Preferences colour buttons
     String prefColorText;
@@ -1885,12 +1974,134 @@ void ExtensionWindow::chordProScrollToSongPart(std::string songPartName) {
     }
 }
 
+void ExtensionWindow::chordProCalculateAutoScroll() {
+    chordProPause.clear();
+    chordProRunningPause = 0;
+    chordProTotalPause = 0;
+    int runningHeight = chordProTopPadding;
+    // Locate and store the pause positions
+    for (auto i = 0; i < chordProLines.size(); ++i) {
+        if (chordProLines[i]->isVisible()) {
+            runningHeight += chordProLines[i]->getHeight();
+        } else if (chordProLines[i]->getProperties()["type"] == "pause") {
+            int pauseLength = chordProLines[i]->getProperties()["pauseLength"].toString().getIntValue();
+            chordProPause.push_back(std::make_pair(runningHeight, pauseLength * 1000));
+            chordProTotalPause += (pauseLength * 1000);
+        }
+    }
+    // Display duration label
+    Time time = Time(extension->chordProSongScrollDuration);
+    String label = time.formatted("%M:%S");
+    extension->autoscrollDurationLabel->setText(label, dontSendNotification);
+
+    // Add extra height (1/3 page) so final text isn't at bottom of the page
+    Rectangle<int> viewportBounds = extension->viewportRight.getViewArea();
+    Rectangle<int> containerBounds = extension->chordProContainer.getBounds();
+    float pages = (float)containerBounds.getHeight() / (float)viewportBounds.getHeight();
+    //extension->addChordProLine(chordProLines.size(), "autoscrollSpacer");
+    if (chordProLines.getLast()->getName() == "autoscrollSpacer") {
+        auto bounds = chordProLines.getFirst()->getBounds();
+        chordProLines.getLast()->setBounds(bounds.withHeight((containerBounds.getHeight() / pages) * 0.3));
+        chordProLines.getLast()->setVisible(true);
+        //chordProLines.getLast()->getProperties().set("autoscrollSpacer", true);
+        resized();
+    }
+
+}
+
+void ExtensionWindow::chordProAutoScrollWindow(double scrollTimeValue) {
+    Point<int> viewportPosition = extension->viewportRight.getViewPosition();
+    //Rectangle<int> viewportBounds = extension->viewportRight.getViewArea();
+    //Rectangle<int> containerBounds = extension->chordProContainer.getBounds();
+    //float pages = (float)containerBounds.getHeight() / (float)viewportBounds.getHeight();
+
+    //Scale to finish scrolling half page early
+    //float scrollTimeValueAdjustment = pages > 1.0 ? (pages / (pages - 0.5)) : 1.0;
+    //scrollTimeValue *= scrollTimeValueAdjustment;
+    //logToGP(std::to_string(scrollTimeValue) + ", " + std::to_string(juce::Time::getCurrentTime().toMilliseconds() - extension->chordProScrollStart));
+ 
+    // Check whether a pause position has been reached
+    for (int i = 0; i < (int)extension->chordProPause.size(); ++i) { 
+        if (viewportPosition.getY() >= extension->chordProPause[i].first) {
+            extension->chordProRunningPause += extension->chordProPause[i].second;
+            extension->songScrollTimer.stopTimer();
+            extension->songScrollPauseTimer.startTimer(extension->chordProPause[i].second);
+            extension->chordProPause.erase(extension->chordProPause.begin());
+            extension->viewportRight.repaint(); // Avoids artefacts
+            extension->resized();
+            return;
+        }
+    }
+    chordProScrollWindow(scrollTimeValue);
+    if (scrollTimeValue > 1.0) {
+        extension->chordProAutoScrollPlay(false);
+    }
+}
+
+void ExtensionWindow::chordProAutoScrollPlay(bool play) {
+    if (play) {
+        //extension->chordProAutoScrollActive = true;
+        // Check viewport position
+        Point<int> viewportPosition = extension->viewportRight.getViewPosition();
+        //Rectangle<int> viewportBounds = extension->viewportRight.getViewArea();
+        //Rectangle<int> containerBounds = extension->chordProContainer.getBounds();
+
+        //float scrollPosition = (float)viewportPosition.getY() / (float)(containerBounds.getHeight() - viewportBounds.getHeight());
+        
+        //float pages = (float)containerBounds.getHeight() / (float)viewportBounds.getHeight();
+
+    //Scale to finish scrolling half page early
+    //float scrollTimeValueAdjustment = pages > 1.0 ? (pages / (pages - 0.5)) : 1.0;
+    //scrollPosition *= scrollTimeValueAdjustment;
+        
+        //int scrollPositionToTime = (int)((float)extension->chordProSongScrollDuration * scrollPosition);
+        //logToGP("Container Height: " + std::to_string(containerBounds.getHeight()) + ", Scroll Y: " + std::to_string(viewportPosition.getY() ) + ", Height: " + std::to_string(viewportBounds.getHeight()));
+
+        //logToGP("Scroll %: " + std::to_string(scrollPosition) + ", Time: " + std::to_string(scrollPositionToTime));
+
+        
+        //extension->viewportRight.setViewPosition(0,0);
+        if (viewportPosition.getY() > 0) {
+            extension->chordProScrollStart = extension->chordProScrollStart + (juce::Time::getCurrentTime().toMilliseconds() - extension->chordProScrollPaused);
+        } else {
+            extension->chordProCalculateAutoScroll();
+            extension->chordProScrollStart = juce::Time::getCurrentTime().toMilliseconds();
+        }
+        extension->songScrollTimer.startTimer(TIMER_AUTOSCROLL);
+    } else {
+        extension->chordProScrollPaused = juce::Time::getCurrentTime().toMilliseconds();
+        //extension->chordProAutoScrollActive = false;
+        extension->autoscrollPlayButton->setToggleState(false, dontSendNotification);
+        extension->chordProAutoScrollStopTimers();
+    }
+}
+
+void ExtensionWindow::chordProAutoScrollReset() {
+    extension->viewportRight.setViewPosition(0,0);
+    extension->autoscrollPlayButton->setToggleState(false, dontSendNotification);
+    extension->chordProAutoScrollStopTimers();
+    extension->autoscrollTimeLabel->setText("00:00 /", dontSendNotification);
+}
+
+void ExtensionWindow::chordProAutoScrollStopTimers() {
+    if (extension->songScrollTimer.isTimerRunning()) extension->songScrollTimer.stopTimer();
+    if (extension->songScrollPauseTimer.isTimerRunning()) extension->songScrollPauseTimer.stopTimer();
+}
+
+void ExtensionWindow::updateAutoscrollTime(Time time) {
+    String label = time.formatted("%M:%S /");
+    if (label != extension->autoscrollTimeLabel->getText()) {
+        extension->autoscrollTimeLabel->setText(label, dontSendNotification);
+    }
+}
+
 void ExtensionWindow::chordProProcessText(String text) {
     StringArray lines = StringArray::fromLines(text);
     String line;
     int firstLineWithContent = false;
     int keyboardDiagramCount = 0;
     int fretboardDiagramCount = 0;
+    int lyricChordRowCount = 0;
     int transpose = 0;
     StringArray directiveParts;
     String directiveName;
@@ -2008,6 +2219,23 @@ void ExtensionWindow::chordProProcessText(String text) {
                     } else if (directiveName == "transpose") {
                         transpose = directiveValue.getIntValue();
                         extension->chordProLines[i]->setVisible(false);
+                    } else if (directiveName  == "duration" || directiveName  == "x_gp_duration") {
+                        extension->chordProSongScroll = true;
+                        StringArray durationParts = StringArray::fromTokens(line,":",""); // Split minutes and seconds
+                        int seconds = 0;
+                        if (durationParts.size() == 2) { // Seconds only
+                            seconds = durationParts[1].trim().getIntValue();
+                        } else  {
+                            seconds = durationParts[1].trim().getIntValue() * 60; // Minutes
+                            seconds += durationParts[2].trim().getIntValue(); // Add seconds
+                        }
+                        extension->chordProSongScrollDuration = seconds * 1000; // Save as milliseconds
+                        extension->chordProLines[i]->setVisible(false);
+
+                    } else if (directiveName == "x_gp_pause") {
+                        extension->chordProLines[i]->getProperties().set("type", "pause");
+                        extension->chordProLines[i]->getProperties().set("pauseLength", directiveValue);
+                        extension->chordProLines[i]->setVisible(false);
                     } else {
                         extension->chordProLines[i]->setLookAndFeel(extension->chordProSubTitleLnF);
                         extension->chordProLines[i]->getProperties().set("type", "other"); 
@@ -2081,7 +2309,7 @@ void ExtensionWindow::chordProProcessText(String text) {
                         }
                     }
                     extension->chordProLines[i]->getProperties().set("gridBars", parts.size());
-                    
+                    lyricChordRowCount++;
                     // Other processing to ensure contents are space separated
                     line = line.replace("|"," | ").replace("."," . ");
                     line = line.replace("|  |","||").replace("| :","|:").replace(": |",":|");
@@ -2128,8 +2356,10 @@ void ExtensionWindow::chordProProcessText(String text) {
                         }
                         line = newLine;
                     }
+                    lyricChordRowCount++;
                 } else if (line.trim() != "" && !gridLine && !tabLine){
                     extension->chordProLines[i]->getProperties().set("type", "lyricOnly"); 
+                    lyricChordRowCount++;
                 }
                 extension->chordProLines[i]->setText(line.trim(), dontSendNotification);
                 extension->chordProLines[i]->getProperties().set("originalText", line.trim()); 
@@ -2168,8 +2398,22 @@ void ExtensionWindow::chordProProcessText(String text) {
             rowCounter++;
         }
     }
+    // Estimate duration if not defined in the file
+    if (!extension->chordProSongScroll) {
+        int seconds = (lyricChordRowCount * 16) / lib->getSongTempo(lib->getCurrentSongIndex()) * 60;
+        extension->chordProSongScroll = true;
+        extension->chordProSongScrollDuration = juce::jmax(seconds, 120)  * 1000;
+        extension->autoscrollDurationLabel->getProperties().set("source","estimate");
+    }
+    //logToGP("Content rows: " + std::to_string(lyricChordRowCount));
+
+    extension->chordProCalculateAutoScroll();
     extension->chordProDisplayGUI(true);
     extension->chordProSetTranspose(transpose);
+
+    // Extra line for autoscroll padding at end
+    extension->addChordProLine(extension->chordProLines.size(), "autoscrollSpacer");
+    extension->chordProLines.getLast()->setVisible(true);
 }
 
 void ExtensionWindow::chordProReadFile(int index) {
@@ -2187,6 +2431,7 @@ void ExtensionWindow::chordProReadFile(int index) {
             chordProFileText = chordProFullPath.loadFileAsString();
             chordProProcessText(chordProFileText);  
             extension->chordProEditor->setText(chordProFileText, false);
+            extension->autoscrollTimeLabel->setText("00:00 /", dontSendNotification);
             extension->noChordProLabel->setVisible(false);
             extension->viewportRight.setViewPosition(0,0);
         } else {
@@ -2204,10 +2449,15 @@ void ExtensionWindow::chordProReset() {
     extension->chordProImages.clear();
     extension->chordProDiagramKeyboard.clear();
     extension->chordProDiagramFretboard.clear();
-
+    extension->chordProAutoScrollPlay(false);
     missingImageContainer.setVisible(false);
     extension->chordProImagesOnly = false;
+    extension->chordProSongScroll = false;
     extension->noChordProLabel->setVisible(true);
+    extension->autoscrollDurationLabel->getProperties().clear();
+    extension->chordProSongScrollDuration = 0;
+    extension->autoscrollTimeLabel->setText("00:00 /", dontSendNotification);
+    extension->autoscrollDurationLabel->setText("00:00", dontSendNotification);
 }
 
 void ExtensionWindow::chordProDisplayGUI(bool display) { 
@@ -2219,10 +2469,13 @@ void ExtensionWindow::chordProDisplayGUI(bool display) {
     columnsTwoButton->setVisible(display && displayRightPanel && chordProImagesOnly && !chordProTwoColumns);
     fitWidthButton->setVisible(display && displayRightPanel && chordProImagesOnly && fitHeight);
     fitHeightButton->setVisible(display && displayRightPanel && chordProImagesOnly && !fitHeight);
+    autoscrollButton->setVisible(display && displayRightPanel);
+
     displayPreferencesContainer(false);
     fontButtonContainer.setVisible(false);
     transposeContainer.setVisible(false);
     displaySearchContainer(false);
+    if (!autoscrollPanelPersist) displayAutoscrollContainer(false);
     if (display) { 
         extension->viewportRight.setViewedComponent(&extension->chordProContainer, false);
         extension->chordProContainer.setVisible(true);
@@ -2284,6 +2537,11 @@ void ExtensionWindow::chordProSetFontSize(float newSize) {
 void ExtensionWindow::chordProSetSmallChordFont(bool isSmall) {
     extension->preferences->setProperty("SmallChordFont", isSmall);
     chordProSmallChordFont = isSmall;
+}
+
+void ExtensionWindow::chordProSetAutoscrollPanelPersist(bool persist) {
+    extension->preferences->setProperty("AutoscrollPanelPersist", persist);
+    autoscrollPanelPersist = persist;
 }
 
 void ExtensionWindow::chordProSetTranspose(int transpose) {
@@ -2459,11 +2717,10 @@ void ExtensionWindow::displayFontContainer(bool display) {
     extension->fontButtonContainer.setVisible(display);
 }
 
-/*
-void ExtensionWindow::displaySetlistContainer(bool display) {
-    extension->setlistContainer.setVisible(display);
+void ExtensionWindow::displayAutoscrollContainer(bool display) {
+    extension->autoscrollContainer.setVisible(display);
 }
-*/
+
 void ExtensionWindow::displayTransposeContainer(bool display) {
     extension->transposeContainer.setVisible(display);
 }
@@ -2490,6 +2747,7 @@ void ExtensionWindow::displayPreferencesContainer(bool display) {
         displayTransposeContainer(false);
         displaySearchContainer(false);
         displayEditorContainer(false);
+        if (!autoscrollPanelPersist) displayAutoscrollContainer(false);
         viewPortBackground = Colour::fromString(BACKGROUND_COLOR);
     } else {
         extension->updatePreferencesColors();
@@ -2589,6 +2847,20 @@ void ExtensionWindow::setSongPanelToFloating(bool isFloating) {
         extension->floatingViewport.setVisible(false);
         extension->floatingViewport.setViewedComponent(nullptr, false);
         extension->viewport.setViewedComponent(&extension->container, false);
+    }
+}
+
+void ExtensionWindow::playheadChange(bool playing) {
+    if (playing && extension->chordProSongScroll) {
+        //extension->chordProAutoScrollActive = true;
+        extension->chordProCalculateAutoScroll();
+        extension->viewportRight.setViewPosition(0,0);
+        extension->chordProScrollStart = juce::Time::getCurrentTime().toMilliseconds();
+        extension->songScrollTimer.startTimer(10);
+    } else {
+        //extension->chordProAutoScrollActive = false;
+        if (extension->songScrollTimer.isTimerRunning()) extension->songScrollTimer.stopTimer();
+        if (extension->songScrollPauseTimer.isTimerRunning()) extension->songScrollPauseTimer.stopTimer();
     }
 }
 
@@ -2740,6 +3012,7 @@ void ChordProContainer::mouseDown (const MouseEvent& )
     ExtensionWindow::displaySetlistContainer(false);
     ExtensionWindow::displayTransposeContainer(false);
     ExtensionWindow::displaySearchContainer(false);
+    if (!autoscrollPanelPersist) ExtensionWindow::displayAutoscrollContainer(false);
     ExtensionWindow::extension->resized();
 }
 
@@ -2773,6 +3046,24 @@ void CreateImageTimer::timerCallback() {
 void WindowChangeTimer::timerCallback() {
     ExtensionWindow::savePreferences();
     this->stopTimer();
+}
+
+void SongScrollTimer::hiResTimerCallback() {
+    int64 time = juce::Time::getCurrentTime().toMilliseconds();
+    int64 elapsed = time - ExtensionWindow::extension->chordProScrollStart - ExtensionWindow::extension->chordProRunningPause;
+    int total = ExtensionWindow::extension->chordProSongScrollDuration - ExtensionWindow::extension->chordProTotalPause;
+    if ( elapsed > total ) {
+        this->stopTimer();
+        ExtensionWindow::extension->chordProScrollWindow(1.0);
+    } else {
+        ExtensionWindow::extension->chordProAutoScrollWindow(float(elapsed) / float(total));
+        ExtensionWindow::extension->updateAutoscrollTime(Time(elapsed));
+    }
+}
+
+void SongScrollPauseTimer::hiResTimerCallback() {
+    this->stopTimer();
+    ExtensionWindow::extension->songScrollTimer.startTimer(TIMER_AUTOSCROLL);
 }
 
 bool MyDocumentWindow::keyPressed(const KeyPress& key)

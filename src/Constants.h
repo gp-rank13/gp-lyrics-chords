@@ -100,5 +100,5 @@ const int TIMER_CLOCK = 5000;
 const int TIMER_UI_REFRESH = 1000;
 const int TIMER_WINDOW_STATE = 1000;
 const int TIMER_IMAGE_CONVERT = 300;
-
+const int TIMER_AUTOSCROLL = 20;
 #endif
