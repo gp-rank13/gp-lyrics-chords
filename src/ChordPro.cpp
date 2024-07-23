@@ -78,12 +78,7 @@ void ChordDiagramKeyboard::updateChordDiagram(int transpose = 0, FLAT_SHARP_DISP
     int rootIndex = ChordPro::CP_GetRootNoteIndex(root);
     allNotesOff();
     for (int i = 0; i < chordNotes.size(); ++i) {
-        int keyIndex = chordNotes[i].getIntValue() + rootIndex + transpose;
-        if (keyIndex >= keyboard.size()) {
-            keyIndex -= keyboard.size();
-        } else if (keyIndex < 0) {
-            keyIndex += keyboard.size();
-        }
+        int keyIndex = (chordNotes[i].getIntValue() + rootIndex + transpose) % keyboard.size();
         keyboard[keyIndex]->noteOn = true;
     }
     chordLabel = ChordPro::CP_Transpose(chord, transpose, accidental);
