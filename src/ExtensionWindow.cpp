@@ -2095,6 +2095,7 @@ void ExtensionWindow::chordProAutoScrollReset() {
     extension->songScrollPauseDisplayTimer.stopTimer();
     extension->autoscrollTimeLabel->setVisible(true);
     extension->autoscrollTimeLabel->setText("00:00", dontSendNotification);
+    autoscrollPlaying = false;
 }
 
 void ExtensionWindow::chordProAutoScrollStopTimers() {
