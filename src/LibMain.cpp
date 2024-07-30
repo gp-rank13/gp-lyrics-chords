@@ -164,6 +164,7 @@ void LibMain::OnStatusChanged(GPStatusType status) {
             ExtensionWindow::updateSetlistButtons(getSetlistNames());
             ExtensionWindow::chordProReadFile(0);
             setWidgetValue(WIDGET_CP_SCROLL, 0.0);
+            setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
             if (!ExtensionWindow::isButtonSelected(0)) { // If selected in GP directly, ensure buttons are in sync
                 ExtensionWindow::selectButton(0);
                 ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(0) : getSongPartNames(0));
@@ -197,6 +198,7 @@ void LibMain::OnSongChanged(int, int newIndex) {
         ExtensionWindow::updateButtonNames(getSongNames());
         ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);
+        setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
         if (!ExtensionWindow::isButtonSelected(newIndex)) { // If selected in GP directly, ensure buttons are in sync
             ExtensionWindow::selectButton(newIndex);
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
@@ -246,16 +248,13 @@ void LibMain::OnModeChanged(int mode) {
 }
 
 void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValue) {
+    if (isGigFileLoading) return;
     if (widgetName == WIDGET_DISPLAY) {
-        if (newValue == 1.0) {
-         ExtensionWindow::displayWindow(true);
-        } else {
-            ExtensionWindow::displayWindow(false);
-        }
+        ExtensionWindow::displayWindow(newValue == 1.0);
     } else if (widgetName == WIDGET_SCROLL) {
-            ExtensionWindow::scrollWindow(newValue);
+        ExtensionWindow::scrollWindow(newValue);
     } else if (widgetName == WIDGET_CP_SCROLL) {
-            ExtensionWindow::chordProScrollWindow(newValue);
+        ExtensionWindow::chordProScrollWindow(newValue);
     } else if(widgetName == WIDGET_CP_UP && newValue == 1.0) {
         ExtensionWindow::chordProUp();
     } else if(widgetName == WIDGET_CP_DOWN && newValue == 1.0) {
@@ -264,6 +263,10 @@ void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValu
         ExtensionWindow::incrementButton(-1);
     } else if(widgetName == WIDGET_NEXT && newValue == 1.0) {
         ExtensionWindow::incrementButton(1);
+    } else if(widgetName == WIDGET_CP_AUTOSCROLL_PLAY) {
+        ExtensionWindow::chordProAutoScrollPlay(newValue == 1.0);
+    } else if(widgetName == WIDGET_CP_AUTOSCROLL_RESET && newValue == 1.0) {
+        ExtensionWindow::chordProAutoScrollReset();
     } 
 }
 

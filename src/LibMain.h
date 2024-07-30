@@ -59,6 +59,8 @@ public:
         listenForWidget(WIDGET_CP_SCROLL, true);
         listenForWidget(WIDGET_CP_UP, true);
         listenForWidget(WIDGET_CP_DOWN, true);
+        listenForWidget(WIDGET_CP_AUTOSCROLL_PLAY, true);
+        listenForWidget(WIDGET_CP_AUTOSCROLL_RESET, true);
     }
     
     std::string GetProductDescription() override;

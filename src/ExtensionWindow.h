@@ -256,7 +256,13 @@ public:
 
     runningY += prefHeight;
 
-    g.drawFittedText ("Prevent auto-hide of autoscroll panel",
+    g.drawFittedText ("Prevent automatic hiding of autoscroll panel",
+      prefIndent, runningY, getWidth(), prefHeight,
+      Justification::left, 1, 1.0f);
+
+    runningY += prefHeight;
+
+    g.drawFittedText ("Start autoscroll with global playhead",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
 
@@ -448,6 +454,7 @@ public:
   void static chordProSetLeftMarginLabels(bool onLeft);
   void static chordProSetSmallChordFont(bool isSmall);
   void static chordProSetAutoscrollPanelPersist(bool persist);
+  void static chordProSetAutoscrollStartWithPlayhead(bool start);
   void static chordProSetTranspose(int transpose);
   void static updateViewportPositionForSubButtons();
   void static toggleZeroBasedNumbering();
@@ -460,6 +467,7 @@ public:
   void static toggleDarkMode();
   void static toggleSmallChordFont();
   void static toggleAutoscrollPanelPersist();
+  void static toggleAutoscrollStartWithPlayhead();
   String buttonName(int index);
   void static displayWindow(bool display);
   void static checkSongListPosition();
@@ -502,6 +510,9 @@ public:
   */
   void static chordProScrollWindow(double value);
   void static chordProAutoScrollWindow(double scrollTimeValue);
+  void static chordProAutoScrollPlay(bool play);
+  void static chordProAutoScrollReset();
+  void static flashAutoscrollTime(bool flash);
   void static chordProUp();
   void static chordProDown();
   void static chordProProcessText(String text);
@@ -562,14 +573,14 @@ public:
   std::vector<std::pair<int,int>> chordProPause;
   SongScrollTimer songScrollTimer;
   SongScrollPauseTimer songScrollPauseTimer;
+  SongScrollPauseDisplayTimer songScrollPauseDisplayTimer;
+
 
  private:
   void log(String text);
   void chordProReset();
   void chordProUpdateDiagramColors();
   void chordProCalculateAutoScroll();
-  void chordProAutoScrollPlay(bool play);
-  void chordProAutoScrollReset();
   void chordProAutoScrollStopTimers();
 
   String static getWindowState();
@@ -623,7 +634,6 @@ public:
   bool chordProImagesOnly = false;
   bool chordProTwoColumns = false;
   bool chordProSongScroll = false;
-  //bool chordProAutoScrollActive = false;
   bool fitHeight = false;
   bool pendingDisplayWindow = false;
   bool windowPinned = false;
@@ -648,6 +658,7 @@ public:
   std::unique_ptr<Label> autoscrollLabel;
   std::unique_ptr<Label> autoscrollTimeLabel;
   std::unique_ptr<Label> autoscrollDurationLabel;
+  std::unique_ptr<Label> autoscrollTimeSeparatorLabel;
   std::unique_ptr<TextButton> btnCurrent;
   std::unique_ptr<TextButton> btnPrev;
   std::unique_ptr<TextButton> btnNext;

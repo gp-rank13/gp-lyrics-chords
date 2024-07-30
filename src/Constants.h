@@ -27,6 +27,8 @@ const std::string WIDGET_NEXT = "GPLC_NEXT";
 const std::string WIDGET_CP_SCROLL = "GPLC_SCROLL";
 const std::string WIDGET_CP_UP = "GPLC_UP";
 const std::string WIDGET_CP_DOWN = "GPLC_DOWN";
+const std::string WIDGET_CP_AUTOSCROLL_PLAY = "GPLC_AUTOSCROLL_PLAY";
+const std::string WIDGET_CP_AUTOSCROLL_RESET = "GPLC_AUTOSCROLL_RESET";
 
 // List of menu items
 const std::vector<std::string> menuNames = { "Show Window", "Preferences..."};
@@ -100,5 +102,7 @@ const int TIMER_CLOCK = 5000;
 const int TIMER_UI_REFRESH = 1000;
 const int TIMER_WINDOW_STATE = 1000;
 const int TIMER_IMAGE_CONVERT = 300;
-const int TIMER_AUTOSCROLL = 20;
+const int TIMER_CARAT = 500;
+const int TIMER_AUTOSCROLL = 50;
+const int TIMER_AUTOSCROLL_PAUSE_DISPLAY = 500;
 #endif

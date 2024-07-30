@@ -43,3 +43,9 @@ class SongScrollPauseTimer : public juce::HighResolutionTimer
 {
     void hiResTimerCallback() override;
 };
+
+class SongScrollPauseDisplayTimer : public Timer
+{
+public:
+    void timerCallback() override;
+};

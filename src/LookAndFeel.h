@@ -832,7 +832,8 @@ class popOverLabel : public LookAndFeel_V4 {
 public:
 	void drawLabel (Graphics& g, Label& label) {
 		const int textWidth = label.getWidth();
-    g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
+    Font font = Font (22.00f, Font::plain).withTypefaceStyle ("Regular");
+    g.setFont (font);
     if (label.getProperties()["source"] == "estimate") {
       g.setColour (Colours::grey);
     } else {
@@ -841,7 +842,7 @@ public:
     g.drawFittedText (label.getText(),
       15, 0, textWidth, label.getHeight(),
       Justification::left, 1, 1.0f);
-    }
+  }
 };
 
 class noSongLabelLookAndFeel : public LookAndFeel_V4 {
