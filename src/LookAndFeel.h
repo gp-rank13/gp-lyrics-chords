@@ -782,20 +782,20 @@ public:
       playFont.setTypefaceName(Font::getDefaultMonospacedFontName());
       #if JUCE_WINDOWS
           playFont.setTypefaceName("Lucida Sans Unicode");
-          playFont.setHeight(label.getHeight());
+          playFont.setHeight(button.getHeight());
       #endif
       play.setFont( playFont );
       play.setJustification( juce::Justification::centred );
       play.setColour(Colours::white);
       play.draw( g, button.getLocalBounds().toFloat().withTrimmedBottom(button.getHeight() * 0.125f));
-    } else if (button.getName() == "autoscrollResetNOT") {
+    } else if (button.getName() == "autoscrollReset") {
       juce::AttributedString reset;
       reset.setText(juce::String::charToString(0x2912));
       Font resetFont (Font (button.getHeight(), Font::plain));
       resetFont.setTypefaceName(Font::getDefaultMonospacedFontName());
       #if JUCE_WINDOWS
-          playFont.setTypefaceName("Lucida Sans Unicode");
-          playFont.setHeight(label.getHeight());
+          resetFont.setTypefaceName("Lucida Sans Unicode");
+          resetFont.setHeight(buttton.getHeight());
       #endif
       reset.setFont( resetFont );
       reset.setJustification( juce::Justification::centred );
