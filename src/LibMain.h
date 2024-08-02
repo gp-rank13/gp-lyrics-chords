@@ -39,6 +39,7 @@ public:
     void OnSetlistChanged(const std::string &newSetlistName) override;
     void OnWidgetValueChanged(const std::string &widgetName, double newValue) override;    
     void OnStatusChanged(GPStatusType status) override; 
+    void OnGlobalPlayStateChanged(double playing) override;
     void Initialization() override
     {
         registerCallback("OnOpen");
@@ -49,6 +50,7 @@ public:
         registerCallback("OnSetlistChanged");
         registerCallback("OnModeChanged");
         registerCallback("OnWidgetValueChanged");
+        registerCallback("OnGlobalPlayStateChanged");
 
         listenForWidget(WIDGET_DISPLAY, true);
         listenForWidget(WIDGET_SCROLL, true);
@@ -57,6 +59,8 @@ public:
         listenForWidget(WIDGET_CP_SCROLL, true);
         listenForWidget(WIDGET_CP_UP, true);
         listenForWidget(WIDGET_CP_DOWN, true);
+        listenForWidget(WIDGET_CP_AUTOSCROLL_PLAY, true);
+        listenForWidget(WIDGET_CP_AUTOSCROLL_RESET, true);
     }
     
     std::string GetProductDescription() override;

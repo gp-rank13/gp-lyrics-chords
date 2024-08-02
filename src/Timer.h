@@ -33,3 +33,19 @@ class WindowChangeTimer : public Timer
 public:
     void timerCallback() override;
 };
+
+class SongScrollTimer : public juce::HighResolutionTimer
+{
+    void hiResTimerCallback() override;
+};
+
+class SongScrollPauseTimer : public juce::HighResolutionTimer
+{
+    void hiResTimerCallback() override;
+};
+
+class SongScrollPauseDisplayTimer : public Timer
+{
+public:
+    void timerCallback() override;
+};
