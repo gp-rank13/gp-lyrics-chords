@@ -416,6 +416,7 @@ public:
   {
       resized(); // Required for triggering resize when dragging the window dividers
   }
+  void static songChanged(int songIndex, std::vector<std::string> songNames);
   void static updateButtonLabel(const String& label);
   void static addButtons(int count);
   void static addSetlistButtons(int count);

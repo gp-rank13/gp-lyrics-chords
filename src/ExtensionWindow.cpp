@@ -1037,6 +1037,24 @@ void ExtensionWindow::resized()
     viewportRight.setViewPosition(viewRightPos);
 }
 
+void ExtensionWindow::songChanged(int songIndex, std::vector<std::string> songNames) {
+    MessageManager::getInstance()->callAsync([songIndex, songNames]() {
+        updateButtonNames(songNames);
+        chordProReadFile(songIndex);
+        if (!isButtonSelected(songIndex)) { // If selected in GP directly, ensure buttons are in sync
+            selectButton(songIndex);
+            updateSubButtonNames(getDisplayVariationForSongPartStatus() ? lib->getVariationNamesForSong(songIndex) : lib->getSongPartNames(songIndex));
+            selectSubButton(lib->getCurrentSongpartIndex());
+            extension->resized();
+        } else {
+            updateSubButtonNames(getDisplayVariationForSongPartStatus() ? lib->getVariationNamesForSong(songIndex) : lib->getSongPartNames(songIndex));
+            selectSubButton(0);
+        }
+    });
+
+}
+
+
 void ExtensionWindow::refreshUI() {
     int songIndex = lib->inSetlistMode() ? lib->getCurrentSongIndex() : extension->getButtonSelected();
     int songPartIndex = lib->inSetlistMode() ? lib->getCurrentSongpartIndex() : 0;
@@ -1374,6 +1392,7 @@ void ExtensionWindow::addSetlistButtons(int count) {
 }
 
 void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
+    //MessageManager::getInstance()->callAsync([buttonNames]() {
     int newButtonCount = buttonNames.size();
     int currentButtonCount = extension->buttons.size();
     bool border = extension->preferences->getProperty("ThickBorders");
@@ -1397,6 +1416,7 @@ void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
             }
         } 
     }
+    //});
  }
 
 void ExtensionWindow::compareButtonNames(std::vector<std::string> newButtonNames) {
@@ -2095,6 +2115,7 @@ void ExtensionWindow::chordProAutoScrollReset() {
     extension->songScrollPauseDisplayTimer.stopTimer();
     extension->autoscrollTimeLabel->setVisible(true);
     extension->autoscrollTimeLabel->setText("00:00", dontSendNotification);
+    autoscrollPlaying = false;
 }
 
 void ExtensionWindow::chordProAutoScrollStopTimers() {
@@ -2124,6 +2145,8 @@ void ExtensionWindow::flashAutoscrollTime(bool flash) {
 }
 
 void ExtensionWindow::chordProProcessText(String text) {
+        logToGP(MessageManager::getInstance()->isThisTheMessageThread() ? "Message Thread: Process text" : "Not Message Thread: Process text");
+
     StringArray lines = StringArray::fromLines(text);
     String line;
     int firstLineWithContent = false;
@@ -2443,7 +2466,9 @@ void ExtensionWindow::chordProProcessText(String text) {
 }
 
 void ExtensionWindow::chordProReadFile(int index) {
-    if (lib == nullptr) return;
+    if (extension == nullptr) return;
+    //MessageManager::getInstance()->callAsync([index]() {
+    logToGP(MessageManager::getInstance()->isThisTheMessageThread() ? "Message Thread: Read file" : "Not Message Thread: Read file");
     String chordProFileText;
     std::string chordProFile = lib->getChordProFilenameForSong(index);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
@@ -2467,6 +2492,7 @@ void ExtensionWindow::chordProReadFile(int index) {
         extension->chordProDisplayGUI(false);
         extension->chordProReset();
     }
+    //});
 }
 
 void ExtensionWindow::chordProReset() {

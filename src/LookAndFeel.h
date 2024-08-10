@@ -788,21 +788,7 @@ public:
       play.setJustification( juce::Justification::centred );
       play.setColour(Colours::white);
       play.draw( g, button.getLocalBounds().toFloat().withTrimmedBottom(button.getHeight() * 0.125f));
-    } else if (button.getName() == "autoscrollReset") {
-      juce::AttributedString reset;
-      reset.setText(juce::String::charToString(0x2912));
-      Font resetFont (Font (button.getHeight(), Font::plain));
-      resetFont.setTypefaceName(Font::getDefaultMonospacedFontName());
-      #if JUCE_WINDOWS
-          resetFont.setTypefaceName("Lucida Sans Unicode");
-          resetFont.setHeight(buttton.getHeight());
-      #endif
-      reset.setFont( resetFont );
-      reset.setJustification( juce::Justification::centred );
-      reset.setColour(Colours::white);
-      reset.draw( g, button.getLocalBounds().toFloat());
-    } 
-    else {
+    } else {
       g.drawFittedText (button.getButtonText(),
           0, y, button.getWidth(), height,
           Justification::centred, 1, 1.0f);

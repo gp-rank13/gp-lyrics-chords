@@ -195,10 +195,12 @@ void LibMain::OnClose() {
 void LibMain::OnSongChanged(int, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && inSetlistMode()) {
-        ExtensionWindow::updateButtonNames(getSongNames());
-        ExtensionWindow::chordProReadFile(newIndex);
+        //ExtensionWindow::updateButtonNames(getSongNames());
+        //ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);
         setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
+        ExtensionWindow::songChanged(newIndex, getSongNames());
+        /*
         if (!ExtensionWindow::isButtonSelected(newIndex)) { // If selected in GP directly, ensure buttons are in sync
             ExtensionWindow::selectButton(newIndex);
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
@@ -208,6 +210,7 @@ void LibMain::OnSongChanged(int, int newIndex) {
             ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
             ExtensionWindow::selectSubButton(0);
         }
+        */
     }
 }
 
