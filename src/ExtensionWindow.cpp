@@ -280,7 +280,7 @@ ExtensionWindow::ExtensionWindow ()
 
     fontDown.reset (new TextButton ("fontDown"));
     fontDown->setLookAndFeel(popOverLnf);
-    fontDown->setButtonText ("-");
+    fontDown->setButtonText (juce::String::charToString(0x2013));
     fontDown->addListener (this);   
 
     fontMono.reset (new TextButton ("Mono"));
@@ -304,7 +304,7 @@ ExtensionWindow::ExtensionWindow ()
 
     transposeDown.reset (new TextButton ("transposeDown"));
     transposeDown->setLookAndFeel(popOverLnf);
-    transposeDown->setButtonText ("-");
+    transposeDown->setButtonText (juce::String::charToString(0x2013));
     transposeDown->addListener (this);   
 
     transposeSharp.reset (new TextButton ("transposeSharp"));
