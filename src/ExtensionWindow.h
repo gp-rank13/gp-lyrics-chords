@@ -18,10 +18,10 @@ using namespace juce;
 extern Colour viewPortBackground;
 extern bool chordProTwoColumnsExtern;
 
-class MyDraggableComponent : public Component 
+class DraggableComponent : public Component 
 {
 public:
-  MyDraggableComponent() { constrainer.setMinimumOnscreenAmounts (0xffffff, 0xffffff, 0xffffff, 0xffffff); }
+  DraggableComponent() { constrainer.setMinimumOnscreenAmounts (0xffffff, 0xffffff, 0xffffff, 0xffffff); }
   ComponentDragger dragger;
   ComponentBoundsConstrainer constrainer;
 
@@ -254,6 +254,18 @@ public:
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
 
+    runningY += prefHeight;
+
+    g.drawFittedText ("Prevent automatic hiding of autoscroll panel",
+      prefIndent, runningY, getWidth(), prefHeight,
+      Justification::left, 1, 1.0f);
+
+    runningY += prefHeight;
+
+    g.drawFittedText ("Start autoscroll with global playhead",
+      prefIndent, runningY, getWidth(), prefHeight,
+      Justification::left, 1, 1.0f);
+
     runningY += (prefHeight + 12);
 
     g.drawFittedText ("Light mode chord color",
@@ -377,7 +389,7 @@ class MyDocumentWindow : public DocumentWindow
 {
   public:
   MyDocumentWindow() :
-  DocumentWindow("GP Selecter", Colours::lightgrey, DocumentWindow::allButtons, true)
+  DocumentWindow("GP Lyrics/Chords", Colours::lightgrey, DocumentWindow::allButtons, true)
   {
     setWantsKeyboardFocus(true);
   }
@@ -400,6 +412,14 @@ public:
   void resized() override;
   void buttonClicked (Button* buttonThatWasClicked) override;
   void closeWindow();
+  void mouseDrag ( const MouseEvent& ) override
+  {
+      resized(); // Required for triggering resize when dragging the window dividers
+  }
+  void static gigLoaded(std::vector<std::string> songNames, std::vector<std::string> setlistNames);
+  void static songChanged(int songIndex, std::vector<std::string> songNames);
+  void static songPartChanged(int songPartIndex, int songIndex);
+  void static setlistChanged(int setlistIndex, int songIndex, std::vector<std::string> setlistNames, std::vector<std::string> songNames);
   void static updateButtonLabel(const String& label);
   void static addButtons(int count);
   void static addSetlistButtons(int count);
@@ -437,6 +457,8 @@ public:
   void static chordProSetFontSize(float newSize);
   void static chordProSetLeftMarginLabels(bool onLeft);
   void static chordProSetSmallChordFont(bool isSmall);
+  void static chordProSetAutoscrollPanelPersist(bool persist);
+  void static chordProSetAutoscrollStartWithPlayhead(bool start);
   void static chordProSetTranspose(int transpose);
   void static updateViewportPositionForSubButtons();
   void static toggleZeroBasedNumbering();
@@ -448,6 +470,8 @@ public:
   void static toggleLeftMarginLabels();
   void static toggleDarkMode();
   void static toggleSmallChordFont();
+  void static toggleAutoscrollPanelPersist();
+  void static toggleAutoscrollStartWithPlayhead();
   String buttonName(int index);
   void static displayWindow(bool display);
   void static checkSongListPosition();
@@ -462,13 +486,16 @@ public:
   void static setWindowPositionAndSize(int x, int y, int w, int h);
   void static setSongLabel();
   void static displayFontContainer(bool display);
+  void static displayAutoscrollContainer(bool display);
   void static displayTransposeContainer(bool display);
   void static displaySearchContainer(bool display);
   void static displayPreferencesContainer(bool display);
   void static displayEditorContainer(bool display);
   void static displaySetlistContainer(bool display);
+  void static updateAutoscrollTime(Time time);
   void static toggleSetlistContainer();
   void static logToGP(std::string text);
+  void static playheadChange(bool playing);
   void static songSearch(String searchCharacter, bool append);
   void static songSearchBackspace();
   void static songSearchSelect();
@@ -479,12 +506,17 @@ public:
 
 
   Image static getWindowIcon();
+  /*
   void mouseDrag ( const MouseEvent& ) override
     {
         resized();
     }
-  
+  */
   void static chordProScrollWindow(double value);
+  void static chordProAutoScrollWindow(double scrollTimeValue);
+  void static chordProAutoScrollPlay(bool play);
+  void static chordProAutoScrollReset();
+  void static flashAutoscrollTime(bool flash);
   void static chordProUp();
   void static chordProDown();
   void static chordProProcessText(String text);
@@ -507,8 +539,8 @@ public:
   void static readPreferencesFile();
 
   static ExtensionWindow* extension;
-  MyDraggableComponent draggableResizer;
-  MyDraggableComponent draggableResizerEditor;
+  DraggableComponent draggableResizer;
+  DraggableComponent draggableResizerEditor;
   WindowChangeTimer windowTimer;
   SharedResourcePointer<buttonLookAndFeel> buttonsLnF;
   SharedResourcePointer<gridButtonLookAndFeel> gridButtonsLnF;
@@ -537,11 +569,24 @@ public:
   SharedResourcePointer<chordProEditorLookAndFeel> chordProEditorLnF;
   bool prefsLoaded = false;
   int editorTextChangedCount = 0;
+  int chordProSongScrollDuration = 0;
+  int chordProRunningPause = 0;
+  int chordProTotalPause = 0;
+  int64 chordProScrollStart = 0;
+  int64 chordProScrollPaused = 0;
+  std::vector<std::pair<int,int>> chordProPause;
+  SongScrollTimer songScrollTimer;
+  SongScrollPauseTimer songScrollPauseTimer;
+  SongScrollPauseDisplayTimer songScrollPauseDisplayTimer;
+
 
  private:
   void log(String text);
   void chordProReset();
   void chordProUpdateDiagramColors();
+  void chordProCalculateAutoScroll();
+  void chordProAutoScrollStopTimers();
+
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
@@ -570,6 +615,7 @@ public:
   PopOver transposeContainer;
   PopOver searchContainer;
   PopOver editorHeaderContainer;
+  PopOver autoscrollContainer;
   OwnedArray<TextButton> buttons;
   OwnedArray<TextButton> subButtons;
   OwnedArray<TextButton> setlistButtons;
@@ -591,6 +637,7 @@ public:
   bool chordProForCurrentSong = false;
   bool chordProImagesOnly = false;
   bool chordProTwoColumns = false;
+  bool chordProSongScroll = false;
   bool fitHeight = false;
   bool pendingDisplayWindow = false;
   bool windowPinned = false;
@@ -612,6 +659,10 @@ public:
   std::unique_ptr<Label> noChordProLabel;
   std::unique_ptr<Label> searchBox;
   std::unique_ptr<Label> editorLabel;
+  std::unique_ptr<Label> autoscrollLabel;
+  std::unique_ptr<Label> autoscrollTimeLabel;
+  std::unique_ptr<Label> autoscrollDurationLabel;
+  std::unique_ptr<Label> autoscrollTimeSeparatorLabel;
   std::unique_ptr<TextButton> btnCurrent;
   std::unique_ptr<TextButton> btnPrev;
   std::unique_ptr<TextButton> btnNext;
@@ -626,6 +677,8 @@ public:
   std::unique_ptr<TextButton> setlistButton;
   std::unique_ptr<TextButton> createInvertedImage;
   std::unique_ptr<TextButton> editorSaveButton;
+  std::unique_ptr<TextButton> autoscrollPlayButton;
+  std::unique_ptr<TextButton> autoscrollResetButton;
   std::unique_ptr<DynamicObject> preferences;
   std::unique_ptr<DynamicObject> preferencesChordProColors;
   std::unique_ptr<IconButton> sidePanelOpenButton;
@@ -646,6 +699,8 @@ public:
   std::unique_ptr<IconButton> searchButton;
   std::unique_ptr<IconButton> editButton;
   std::unique_ptr<IconButton> editorCloseButton;
+  std::unique_ptr<IconButton> autoscrollButton;
+  std::unique_ptr<IconButton> autoscrollResetButtonIcon;
   std::unique_ptr<ChordProEditor> chordProEditor;
   Image menuIcon;
   ImageComponent menuIconComponent;

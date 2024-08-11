@@ -763,7 +763,7 @@ public:
       fontHeight = button.getHeight() * 0.5;
     } else if (button.getName() == "transposeSharp") {
       fontHeight = button.getHeight() * 0.75;
-    }
+    } 
 		Font font (fontHeight);
     auto height = ((button.getName() == "Mono" || button.getName() == "Create" || button.getName() == "Save") ? button.getHeight() : button.getHeight() * 0.85);
 		if (button.getName() == "transposeFlat" || button.getName() == "transposeSharp") {
@@ -775,10 +775,25 @@ public:
     }
     g.setFont (font);
 		g.setColour (Colours::white);
-    g.drawFittedText (button.getButtonText(),
-				0, y, button.getWidth(), height,
-				Justification::centred, 1, 1.0f);
+    if (button.getName() == "autoscrollPlay") {
+      juce::AttributedString play;
+      play.setText(juce::String::charToString(0x25B6));
+      Font playFont (Font (button.getHeight() * 0.8f, Font::plain));
+      playFont.setTypefaceName(Font::getDefaultMonospacedFontName());
+      #if JUCE_WINDOWS
+          playFont.setTypefaceName("Lucida Sans Unicode");
+          playFont.setHeight(button.getHeight());
+      #endif
+      play.setFont( playFont );
+      play.setJustification( juce::Justification::centred );
+      play.setColour(Colours::white);
+      play.draw( g, button.getLocalBounds().toFloat().withTrimmedBottom(button.getHeight() * 0.125f));
+    } else {
+      g.drawFittedText (button.getButtonText(),
+          0, y, button.getWidth(), height,
+          Justification::centred, 1, 1.0f);
     }
+  }
 
   void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour&,
                               bool isButtonHighlighted, bool isButtonDown) {
@@ -803,12 +818,17 @@ class popOverLabel : public LookAndFeel_V4 {
 public:
 	void drawLabel (Graphics& g, Label& label) {
 		const int textWidth = label.getWidth();
-    g.setFont (Font (22.00f, Font::plain).withTypefaceStyle ("Regular"));
-    g.setColour (chordProLyricColor.withMultipliedBrightness(0.8f));
+    Font font = Font (22.00f, Font::plain).withTypefaceStyle ("Regular");
+    g.setFont (font);
+    if (label.getProperties()["source"] == "estimate") {
+      g.setColour (Colours::grey);
+    } else {
+      g.setColour (chordProLyricColor.withMultipliedBrightness(0.8f));
+    }
     g.drawFittedText (label.getText(),
       15, 0, textWidth, label.getHeight(),
       Justification::left, 1, 1.0f);
-    }
+  }
 };
 
 class noSongLabelLookAndFeel : public LookAndFeel_V4 {
