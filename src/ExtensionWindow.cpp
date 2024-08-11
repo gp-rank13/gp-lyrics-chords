@@ -1037,7 +1037,25 @@ void ExtensionWindow::resized()
     viewportRight.setViewPosition(viewRightPos);
 }
 
+void ExtensionWindow::gigLoaded(std::vector<std::string> songNames, std::vector<std::string> setlistNames) {
+    if (extension == nullptr) return;
+    MessageManager::getInstance()->callAsync([songNames, setlistNames]() {
+        updateButtonNames(songNames);
+        updateSetlistButtons(setlistNames);
+        chordProReadFile(0);
+        if (!isButtonSelected(0)) { 
+            selectButton(0);
+            updateSubButtonNames(getDisplayVariationForSongPartStatus() ? lib->getVariationNamesForSong(0) : lib->getSongPartNames(0));
+            selectSubButton(0);
+        } else {
+            updateSubButtonNames(getDisplayVariationForSongPartStatus() ? lib->getVariationNamesForSong(0) : lib->getSongPartNames(0));
+        }
+        refreshUI();
+    });
+}
+
 void ExtensionWindow::songChanged(int songIndex, std::vector<std::string> songNames) {
+    if (extension == nullptr) return;
     MessageManager::getInstance()->callAsync([songIndex, songNames]() {
         updateButtonNames(songNames);
         chordProReadFile(songIndex);
@@ -1051,9 +1069,30 @@ void ExtensionWindow::songChanged(int songIndex, std::vector<std::string> songNa
             selectSubButton(0);
         }
     });
-
 }
 
+void ExtensionWindow::songPartChanged(int songPartIndex, int songIndex) {
+    if (extension == nullptr) return;
+    MessageManager::getInstance()->callAsync([songPartIndex, songIndex]() {
+        if (!isSubButtonSelected(songPartIndex)) {
+            compareSubButtonNames(lib->getSongPartNames(songIndex));
+            selectSubButton(songPartIndex);
+            chordProScrollToSongPart(lib->getSongpartName(songIndex, songPartIndex));
+        }
+    });
+}
+
+void ExtensionWindow::setlistChanged(int setlistIndex, int songIndex, std::vector<std::string> setlistNames, std::vector<std::string> songNames) {
+    if (extension == nullptr) return;
+    updateSetlistButtons(setlistNames);
+    updateButtonNames(songNames);
+    selectSetlistButton(setlistIndex);
+    chordProReadFile(songIndex);
+    selectButton(songIndex);
+    updateSubButtonNames(getDisplayVariationForSongPartStatus() ? lib->getVariationNamesForSong(songIndex) : lib->getSongPartNames(songIndex));
+    selectSubButton(lib->getCurrentSongpartIndex());
+    extension->resized();
+}
 
 void ExtensionWindow::refreshUI() {
     int songIndex = lib->inSetlistMode() ? lib->getCurrentSongIndex() : extension->getButtonSelected();
@@ -1392,7 +1431,6 @@ void ExtensionWindow::addSetlistButtons(int count) {
 }
 
 void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
-    //MessageManager::getInstance()->callAsync([buttonNames]() {
     int newButtonCount = buttonNames.size();
     int currentButtonCount = extension->buttons.size();
     bool border = extension->preferences->getProperty("ThickBorders");
@@ -1416,7 +1454,6 @@ void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
             }
         } 
     }
-    //});
  }
 
 void ExtensionWindow::compareButtonNames(std::vector<std::string> newButtonNames) {
@@ -1913,7 +1950,6 @@ void ExtensionWindow::processPreferencesChordProColors(StringPairArray prefs) {
     extension->preferencesChordProColors->setProperty("DarkModeChords", prefs.getValue("DarkModeChords", CP_DARK_CHORD_COLOR));
     extension->preferencesChordProColors->setProperty("DarkModeLyrics", prefs.getValue("DarkModeLyrics", CP_DARK_LYRIC_COLOR));
     extension->preferencesChordProColors->setProperty("DarkModeBackground", prefs.getValue("DarkModeBackground", CP_DARK_BACKGROUND_COLOR));
-
     extension->chordProSetColors();
     extension->updatePreferencesWindow();
 }
@@ -2145,8 +2181,6 @@ void ExtensionWindow::flashAutoscrollTime(bool flash) {
 }
 
 void ExtensionWindow::chordProProcessText(String text) {
-        logToGP(MessageManager::getInstance()->isThisTheMessageThread() ? "Message Thread: Process text" : "Not Message Thread: Process text");
-
     StringArray lines = StringArray::fromLines(text);
     String line;
     int firstLineWithContent = false;
@@ -2196,7 +2230,6 @@ void ExtensionWindow::chordProProcessText(String text) {
                         extension->chordProLines[i]->setLookAndFeel(extension->chordProLabelLnF);
                         extension->chordProLines[i]->getProperties().set("type", "label"); 
                         extension->chordProLines[i]->setVisible(!chordProLeftLabels);
-                        
                     } else if (directiveName == "image") {
                             #if JUCE_WINDOWS
                                 if (directiveParts.size() == 3) { // File path had a drive letter e.g. C:
@@ -2233,7 +2266,7 @@ void ExtensionWindow::chordProProcessText(String text) {
                             extension->chordProDiagramKeyboard[keyboardDiagramCount]->updateKeyOnColour(chordProChordColor);
                             keyboardDiagramCount++;
                         } else if (definition[1].contains("fret")) {
-                             if (fretboardDiagramCount == 0) { // First line. All diagrams will be displayed.
+                            if (fretboardDiagramCount == 0) { // First line. All diagrams will be displayed.
                                 extension->chordProLines[i]->setVisible(true);
                                 extension->chordProLines[i]->getProperties().set("type", "diagramFretboard"); 
                                 directiveValue = "";
@@ -2467,8 +2500,6 @@ void ExtensionWindow::chordProProcessText(String text) {
 
 void ExtensionWindow::chordProReadFile(int index) {
     if (extension == nullptr) return;
-    //MessageManager::getInstance()->callAsync([index]() {
-    logToGP(MessageManager::getInstance()->isThisTheMessageThread() ? "Message Thread: Read file" : "Not Message Thread: Read file");
     String chordProFileText;
     std::string chordProFile = lib->getChordProFilenameForSong(index);
     extension->chordProForCurrentSong = (chordProFile == "") ? false : true;
@@ -2492,7 +2523,6 @@ void ExtensionWindow::chordProReadFile(int index) {
         extension->chordProDisplayGUI(false);
         extension->chordProReset();
     }
-    //});
 }
 
 void ExtensionWindow::chordProReset() {
@@ -2905,8 +2935,12 @@ void ExtensionWindow::setSongPanelToFloating(bool isFloating) {
 }
 
 void ExtensionWindow::playheadChange(bool playing) {
-    if (playing)
-        chordProAutoScrollPlay(true);
+    if (extension == nullptr) return;
+    if (playing) {
+        MessageManager::getInstance()->callAsync([]() {
+            chordProAutoScrollPlay(true);
+        });
+    }
 }
 
 void ExtensionWindow::clearSearch() {
@@ -3000,6 +3034,7 @@ void ExtensionWindow::saveChordProFile() {
 }
 
 void ExtensionWindow::readPreferencesFile() {
+    if (extension == nullptr) return;
     std::string prefsFilePath = extensionPath + PATH_SEPARATOR() + PREF_FILENAME;
     File file = File(prefsFilePath);
     String prefsFileText = file.loadFileAsString();

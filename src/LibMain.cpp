@@ -16,13 +16,11 @@ bool isGigFileLoading = false;
 bool isFirstGigFileOpened = false;
 std::string extensionPath;
 
-int LibMain::GetMenuCount()
-{
+int LibMain::GetMenuCount() {
    return menuNames.size();
 }
 
- std::string  LibMain::GetMenuName(int index)
-{
+std::string  LibMain::GetMenuName(int index) {
    std::string text;
    if (index >= 0 && index < (int)menuNames.size())
        text =  menuNames[index];
@@ -30,24 +28,21 @@ int LibMain::GetMenuCount()
    return text;      
 }
 
-void LibMain::InvokeMenu(int index)
-{
-   if (index >= 0 && index < (int)menuNames.size())
-         {
-            switch (index)
-               {
-                  case 0:
-                      ExtensionWindow::displayWindow(true);
-                     break;
-                  case 1:
-                    ExtensionWindow::displayWindow(true);
-                    ExtensionWindow::displayPreferencesContainer(true);
-                    break;
-                  default:
-                     break;   
-               }
-               isFirstGigFileOpened = true; // Handle scenario where extension is manually activated in GP
-         }
+void LibMain::InvokeMenu(int index) {
+   if (index >= 0 && index < (int)menuNames.size()) {
+        switch (index) {
+            case 0:
+                ExtensionWindow::displayWindow(true);
+                break;
+            case 1:
+                ExtensionWindow::displayWindow(true);
+                ExtensionWindow::displayPreferencesContainer(true);
+                break;
+            default:
+                break;   
+        }
+        isFirstGigFileOpened = true; // Handle scenario where extension is manually activated in GP
+    }
 }
 
 int LibMain::GetPanelCount() {
@@ -156,24 +151,14 @@ void LibMain::OnStatusChanged(GPStatusType status) {
             break;
         case GPStatus_GigFinishedLoading:
             isGigFileLoading = false;
+            setWidgetValue(WIDGET_CP_SCROLL, 0.0);
+            setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
             if (!isFirstGigFileOpened) {
+                setWidgetValue(WIDGET_DISPLAY, 0.0);
                 ExtensionWindow::readPreferencesFile();
                 isFirstGigFileOpened = true;
             }
-            ExtensionWindow::updateButtonNames(getSongNames());
-            ExtensionWindow::updateSetlistButtons(getSetlistNames());
-            ExtensionWindow::chordProReadFile(0);
-            setWidgetValue(WIDGET_CP_SCROLL, 0.0);
-            setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
-            if (!ExtensionWindow::isButtonSelected(0)) { // If selected in GP directly, ensure buttons are in sync
-                ExtensionWindow::selectButton(0);
-                ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(0) : getSongPartNames(0));
-                ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
-            } else {
-                ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(0) : getSongPartNames(0));
-            }
-
-            ExtensionWindow::refreshUI();
+            ExtensionWindow::gigLoaded(getSongNames(),getSetlistNames());
             break;
         case GPStatus_SaveRequest:
             ExtensionWindow::savePreferences();
@@ -195,51 +180,23 @@ void LibMain::OnClose() {
 void LibMain::OnSongChanged(int, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && inSetlistMode()) {
-        //ExtensionWindow::updateButtonNames(getSongNames());
-        //ExtensionWindow::chordProReadFile(newIndex);
         setWidgetValue(WIDGET_CP_SCROLL, 0.0);
         setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
         ExtensionWindow::songChanged(newIndex, getSongNames());
-        /*
-        if (!ExtensionWindow::isButtonSelected(newIndex)) { // If selected in GP directly, ensure buttons are in sync
-            ExtensionWindow::selectButton(newIndex);
-            ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
-            ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
-            ExtensionWindow::extension->resized();
-        } else {
-            ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(newIndex) : getSongPartNames(newIndex));
-            ExtensionWindow::selectSubButton(0);
-        }
-        */
     }
 }
 
 void LibMain::OnSongPartChanged(int oldIndex, int newIndex) {
     if (isGigFileLoading) return;
     if (newIndex >= 0 && oldIndex != newIndex && inSetlistMode()) {
-        int songIndex = getCurrentSongIndex();
-        if (!ExtensionWindow::isSubButtonSelected(newIndex)) {
-            ExtensionWindow::compareSubButtonNames(getSongPartNames(songIndex));
-            ExtensionWindow::selectSubButton(newIndex);
-            ExtensionWindow::chordProScrollToSongPart(getSongpartName(getCurrentSongIndex(), newIndex));
-        }
+        ExtensionWindow::songPartChanged(newIndex, getCurrentSongIndex());
     }
 }
 
 void LibMain::OnSetlistChanged(const std::string&) {
     if (isGigFileLoading) return;
     if (inSetlistMode()) {
-        int songIndex = getCurrentSongIndex();
-        ExtensionWindow::updateSetlistButtons(getSetlistNames());
-        ExtensionWindow::updateButtonNames(getSongNames());
-        ExtensionWindow::selectSetlistButton(getCurrentSetlistIndex());
-        ExtensionWindow::chordProReadFile(songIndex);
-        if (!ExtensionWindow::isButtonSelected(songIndex)) { // If selected in GP directly, ensure buttons are in sync
-            ExtensionWindow::selectButton(songIndex);
-            ExtensionWindow::updateSubButtonNames(ExtensionWindow::getDisplayVariationForSongPartStatus() ? getVariationNamesForSong(songIndex) : getSongPartNames(songIndex));
-            ExtensionWindow::selectSubButton(getCurrentSongpartIndex());
-        }
-        ExtensionWindow::extension->resized();
+        ExtensionWindow::setlistChanged(getCurrentSetlistIndex(), getCurrentSongIndex(), getSetlistNames(), getSongNames());
     }
 }
 
@@ -277,7 +234,6 @@ void LibMain::OnGlobalPlayStateChanged(double playing) {
     ExtensionWindow::playheadChange(playing > 0.0);
 }
 
-std::string LibMain::GetProductDescription()
-{
+std::string LibMain::GetProductDescription() {
     return XMLProductDescription;
 }
