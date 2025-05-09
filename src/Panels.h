@@ -355,7 +355,7 @@ std::vector<std::string> panelXML = {
 "                    Underlined=\"0\"/>"
 "  </WIDGET>"
 "  <WIDGET type=\"4\" style=\"0\" x=\"0.945814648729447\" y=\"0.1326086956521739\""
-"          width=\"0.1083707025411061\" height=\"0.2478260869565218\" caption=\"Chorus\""
+"          width=\"0.1083707025411061\" height=\"0.2478260869565218\" caption=\"\""
 "          captionIncludesAttribute=\"0\" hideTemporaryValueDisplay=\"0\" hideInPresentationView=\"1\""
 "          widgetIgnoresMouse=\"1\" overrideName=\"1\" captionVisible=\"0\" captionHeight=\"0.1929824561403509\""
 "          reflectMIDI=\"\" reflectMIDIOn=\"0\" midiThru=\"0\" midiSource=\"\" midiDevice=\"\""
