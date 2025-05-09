@@ -256,6 +256,12 @@ public:
 
     runningY += prefHeight;
 
+    g.drawFittedText ("Do not invert image colors in dark mode",
+      prefIndent, runningY, getWidth(), prefHeight,
+      Justification::left, 1, 1.0f);
+
+    runningY += prefHeight;
+
     g.drawFittedText ("Prevent automatic hiding of autoscroll panel",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
@@ -457,6 +463,7 @@ public:
   void static chordProSetFontSize(float newSize);
   void static chordProSetLeftMarginLabels(bool onLeft);
   void static chordProSetSmallChordFont(bool isSmall);
+  void static chordProSetCreateDarkModeImages(bool createImages);
   void static chordProSetAutoscrollPanelPersist(bool persist);
   void static chordProSetAutoscrollStartWithPlayhead(bool start);
   void static chordProSetTranspose(int transpose);

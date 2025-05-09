@@ -18,6 +18,7 @@ int chordProTranspose = 0;
 FLAT_SHARP_DISPLAY chordProTransposeDisplay = original;
 bool chordProMonospaceFont = false;
 bool chordProSmallChordFont = false;
+bool chordProCreateDarkModeImages = false;
 bool chordProLeftLabels = false;
 bool chordProDarkMode = false;
 bool chordProTwoColumnsExtern = false;
@@ -54,7 +55,7 @@ ExtensionWindow::ExtensionWindow ()
     on.setImage(toggleOn);
     off.setImage(toggleOff);
 
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 9; ++i) {
         auto button = new DrawableButton(std::to_string(i), DrawableButton::ImageFitted);
         prefButtons.add(button);
         prefButtons[i]->setImages(&off, 0, 0, 0, &on);
@@ -823,9 +824,10 @@ void ExtensionWindow::resized()
     prefButtons[5]->setBounds(50, 388, 40, 40);
     prefButtons[6]->setBounds(50, 423, 40, 40);
     prefButtons[7]->setBounds(50, 458, 40, 40);
+    prefButtons[8]->setBounds(50, 493, 40, 40);
 
     for (int i = 0; i < 4; ++i) {
-        prefColorButtons[i]->setBounds(50, 510 + 35 * i, 80, 30);
+        prefColorButtons[i]->setBounds(50, 545 + 35 * i, 80, 30);
     }
 
     int setlistCount = 0;
@@ -864,6 +866,7 @@ void ExtensionWindow::resized()
 
         for (auto i = 0; i < chordProLines.size(); ++i) {
             if (chordProLines[i]->isVisible() && !(chordProImagesOnly && chordProLines[i]->getProperties()["type"] == "")) {
+                float chordProDefinedImageScale = 1.0;
                 if (chordProLines[i]->getProperties()["type"] == "chordAndLyrics") {
                     rowHeight = 80.0 * chordProFontSize;
                 } else if (chordProLines[i]->getProperties()["type"] == "title") {
@@ -880,14 +883,33 @@ void ExtensionWindow::resized()
                     rowHeight = 40.0 * chordProFontSize;
                 } else if (chordProLines[i]->getProperties()["type"] == "image") {
                     rowHeight = 0.0;
-                    int imageIndex = chordProLines[i]->getProperties()["imageIndex"]; 
-                    float originalWidth = (float)(extension->chordProImages[imageIndex]->getImage().getWidth()); 
+                    int imageIndex = chordProLines[i]->getProperties()["imageIndex"];
+                    String imageScale = std::regex_replace(chordProLines[i]->getProperties()["scale"].toString().toStdString(), std::regex(R"([^0-9]+$)"), "");
+                    String imageAlign = chordProLines[i]->getProperties()["align"].toString();
+
+                    //if () = std::regex_replace(chordProLines[i]->getProperties()["width"].toString().toStdString(), std::regex("\\[0-9]"), "");
+                    //logToGP("Scale: "+imageScale.toStdString());
+                    //String test = chordProLines[i]->getProperties()["width"] == "" ? "No Width" : chordProLines[i]->getProperties()["width"].toString();
+                    //if (chordProLines[i]->getProperties()["width"] != "") {
+                    //    imageWidth = std::regex_replace(chordProLines[i]->getProperties()["width"].toString().toStdString(), std::regex(R"([^0-9])"), "");
+                    //}
+                    //logToGP("Width: "+ imageWidth.toStdString());
+                    if (imageScale != "") {
+                        float scaleValue = imageScale.getFloatValue();
+                        chordProDefinedImageScale = scaleValue / (scaleValue <= 1.0 ? 1.0 : 100.0);
+                    }
+                    //float chordProDefinedWidth = imageWidth.getFloatValue() / 100.0;
+                    float originalWidth = (float)(extension->chordProImages[imageIndex]->getImage().getWidth());
                     float originalHeight = (float)(extension->chordProImages[imageIndex]->getImage().getHeight());
                     float ratio = originalWidth / (float)(viewportRight.getWidth() - 10);
-                    float newWidth = (float)(viewportRight.getWidth() - 10) / columns;
+                    float newWidth = ((float)(viewportRight.getWidth() - 10) / columns) * chordProDefinedImageScale;
                     if (chordProTwoColumns && chordProImagesOnly) newWidth = newWidth - (padding / 2.0);
-                    float newHeight = originalHeight / (ratio * columns);
-                    int imageX = 0;
+                    float newHeight = (originalHeight * chordProDefinedImageScale) / (ratio * columns);
+                    //int imageX = 0;
+                    int imageX = juce::jmax(0, (int)((viewportRight.getWidth() - newWidth) / 2));
+                    if (imageAlign.toLowerCase() == "left") {
+                        imageX = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
+                    }
                     if (fitHeight && chordProImagesOnly) {
                         newHeight = (float)(viewportRight.getHeight() - padding);
                         newWidth = originalWidth / originalHeight * newHeight;
@@ -900,6 +922,8 @@ void ExtensionWindow::resized()
                     } else if (chordProTwoColumns && chordProImagesOnly && fitHeight) {
                         extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? imageX : imageX + newWidth + padding, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     } else {
+                        String test = std::to_string(newWidth);
+                        logToGP(test.toStdString());
                         extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
                     }
                     rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : newHeight + padding;
@@ -953,7 +977,9 @@ void ExtensionWindow::resized()
                 // Adjust position of images for two column view
                 if (chordProLines[i]->getProperties()["type"] == "image" && chordProTwoColumns && !chordProImagesOnly) {
                     int imageIndex = chordProLines[i]->getProperties()["imageIndex"]; 
-                    extension->chordProImages[imageIndex]->setBounds(bounds);
+                    int width = (float)bounds.getWidth() * chordProDefinedImageScale;
+                    int imageX = (bounds.getWidth() - width) / 2; // Centred
+                    extension->chordProImages[imageIndex]->setBounds(bounds.withWidth(width).withX(imageX));
                 }
                 runningHeight += rowHeight;
 
@@ -1846,9 +1872,12 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         toggleSmallChordFont();
         displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == prefButtons[6]) {
-        toggleAutoscrollPanelPersist();
+        chordProSetCreateDarkModeImages(buttonThatWasClicked->getToggleState());
         displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == prefButtons[7]) {
+        toggleAutoscrollPanelPersist();
+        displayPreferencesContainer(true);
+    } else if (buttonThatWasClicked == prefButtons[8]) {
         toggleAutoscrollStartWithPlayhead();
         displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == preferencesCloseButton.get()) {
@@ -1934,6 +1963,7 @@ void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
     chordProSetFontSize(fontSize == "0" ? CP_DEFAULT_FONT_SIZE : fontSize.getFloatValue());
     chordProSetLeftMarginLabels(prefs.getValue("LeftMarginLabels", "") == "true" ? true : false); 
     chordProSetSmallChordFont(prefs.getValue("SmallChordFont", "") == "true" ? true : false); 
+    chordProSetCreateDarkModeImages(prefs.getValue("CreateDarkModeImages", "") == "false" ? false : true); 
     chordProSetAutoscrollPanelPersist(prefs.getValue("AutoscrollPanelPersist", "") == "true" ? true : false); 
     chordProSetAutoscrollStartWithPlayhead(prefs.getValue("AutoscrollStartWithPlayhead", "") == "true" ? true : false); 
     extension->updatePreferencesWindow();
@@ -1985,10 +2015,12 @@ void ExtensionWindow::updatePreferencesWindow() {
      extension->prefButtons[4]->setToggleState(status, dontSendNotification);
      status = extension->preferences->getProperty("SmallChordFont");
      extension->prefButtons[5]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("AutoscrollPanelPersist");
+     status = extension->preferences->getProperty("CreateDarkModeImages");
      extension->prefButtons[6]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("AutoscrollStartWithPlayhead");
+     status = extension->preferences->getProperty("AutoscrollPanelPersist");
      extension->prefButtons[7]->setToggleState(status, dontSendNotification);
+     status = extension->preferences->getProperty("AutoscrollStartWithPlayhead");
+     extension->prefButtons[8]->setToggleState(status, dontSendNotification);
 
     // Preferences colour buttons
     String prefColorText;
@@ -2236,11 +2268,36 @@ void ExtensionWindow::chordProProcessText(String text) {
                                     directiveValue = directiveParts[1].trim() + ":" + directiveParts[2].trim();
                                 }  
                             #endif
-                            String path = directiveValue.removeCharacters("\"");
+                            String path;
+                            String scale;
+                            String width;
+                            String height;
+                            String align;
+                            StringArray imageAttributes = StringArray::fromTokens(directiveValue, "\"","");
+                            imageAttributes.removeEmptyStrings();
+                            if (directiveValue.contains("=")) { // Contains image formatting attributes
+                                path = imageAttributes[0].contains("src") ? imageAttributes[1].trim() : imageAttributes[0].trim();
+                                for (int j = 1; j < imageAttributes.size() - 1; ++j) { 
+                                    if (imageAttributes[j].contains("width")) {
+                                        width = imageAttributes[j+1].trim();
+                                    } else if (imageAttributes[j].contains("height")) {
+                                        height = imageAttributes[j+1].trim();
+                                    } else if (imageAttributes[j].contains("scale")) {
+                                        scale = imageAttributes[j+1].trim();
+                                    } else if (imageAttributes[j].contains("align")) {
+                                        align = imageAttributes[j+1].trim();
+                                    }
+                                }
+                            } else {
+                                path = imageAttributes[0].trim();
+                            }
                             bool isValid = extension->addChordProImage(path);
                             if (isValid) {
                                 extension->chordProLines[i]->getProperties().set("imageIndex", extension->chordProImages.size() - 1);
                                 extension->chordProLines[i]->getProperties().set("type", "image");  
+                                extension->chordProLines[i]->getProperties().set("width", width);  
+                                extension->chordProLines[i]->getProperties().set("scale", scale);
+                                extension->chordProLines[i]->getProperties().set("align", align);  
                             }
                             directiveValue = "";
                     } else if (directiveName == "define") {
@@ -2616,6 +2673,11 @@ void ExtensionWindow::chordProSetFontSize(float newSize) {
 void ExtensionWindow::chordProSetSmallChordFont(bool isSmall) {
     extension->preferences->setProperty("SmallChordFont", isSmall);
     chordProSmallChordFont = isSmall;
+}
+
+void ExtensionWindow::chordProSetCreateDarkModeImages(bool createImages) {
+    extension->preferences->setProperty("CreateDarkModeImages", createImages);
+    chordProCreateDarkModeImages = createImages;
 }
 
 void ExtensionWindow::chordProSetAutoscrollPanelPersist(bool persist) {
