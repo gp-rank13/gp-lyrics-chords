@@ -503,15 +503,7 @@ public:
   void static displaySearchCarat(); 
   bool static isActiveSearch();
   void static filterButtons(String text);
-
-
   Image static getWindowIcon();
-  /*
-  void mouseDrag ( const MouseEvent& ) override
-    {
-        resized();
-    }
-  */
   void static chordProScrollWindow(double value);
   void static chordProAutoScrollWindow(double scrollTimeValue);
   void static chordProAutoScrollPlay(bool play);
@@ -522,6 +514,7 @@ public:
   void static chordProProcessText(String text);
   void static chordProReadFile(int index);
   void static chordProScrollToSongPart(std::string text);
+  void static chordProScrollToMarker(std::string text);
   void chordProDisplayGUI(bool display);
   void chordProSetColors();
   void chordProSetImageDarkMode(bool darkMode);
@@ -579,14 +572,12 @@ public:
   SongScrollPauseTimer songScrollPauseTimer;
   SongScrollPauseDisplayTimer songScrollPauseDisplayTimer;
 
-
  private:
   void log(String text);
   void chordProReset();
   void chordProUpdateDiagramColors();
   void chordProCalculateAutoScroll();
   void chordProAutoScrollStopTimers();
-
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
@@ -645,7 +636,6 @@ public:
   std::unique_ptr<int> switchImmediately;
   int prevButtonSelected = 0;
   bool editorTextEdited = false;
-  
   String searchText;
   String chordProTextOriginal;
   std::unique_ptr<Label> highlight;

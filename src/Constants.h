@@ -29,6 +29,7 @@ const std::string WIDGET_CP_UP = "GPLC_UP";
 const std::string WIDGET_CP_DOWN = "GPLC_DOWN";
 const std::string WIDGET_CP_AUTOSCROLL_PLAY = "GPLC_AUTOSCROLL_PLAY";
 const std::string WIDGET_CP_AUTOSCROLL_RESET = "GPLC_AUTOSCROLL_RESET";
+const std::string WIDGET_CP_MARKER = "GPLC_MARKER";
 
 // List of menu items
 const std::vector<std::string> menuNames = { "Show Window", "Preferences..."};

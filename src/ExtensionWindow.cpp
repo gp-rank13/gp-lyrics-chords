@@ -2055,6 +2055,17 @@ void ExtensionWindow::chordProScrollToSongPart(std::string songPartName) {
     }
 }
 
+void ExtensionWindow::chordProScrollToMarker(std::string markerName) {
+    for (int i = 0; i < extension->chordProLines.size(); ++i) { 
+        if (extension->chordProLines[i]->getProperties()["type"] == "gp_marker") {
+            if (extension->chordProLines[i]->getText().toStdString() == markerName) {
+                Rectangle<int> buttonBounds = extension->chordProLines[i]->getBounds();
+                extension->viewportRight.setViewPosition(0, buttonBounds.getY());
+            }
+        }
+    }
+}
+
 void ExtensionWindow::chordProCalculateAutoScroll() {
     chordProPause.clear();
     chordProRunningPause = 0;
@@ -2209,7 +2220,7 @@ void ExtensionWindow::chordProProcessText(String text) {
         if (firstLineWithContent) {   
             if (line.contains("{")) { // Directive
                 extension->chordProLines[i]->getProperties().set("type", "directive"); 
-                line = line.removeCharacters("{}");
+                line = line.removeCharacters("{}\"");
                 if (line.contains(":")) {
                     directiveParts = StringArray::fromTokens(line,":",""); // Split directive
                     directiveName = directiveParts[0].removeCharacters(" ").toLowerCase();
@@ -2226,6 +2237,9 @@ void ExtensionWindow::chordProProcessText(String text) {
                     } else if (directiveName == "songpartname") {
                         extension->chordProLines[i]->setVisible(false);
                         extension->chordProLines[i]->getProperties().set("type", "gp_songpartname"); 
+                    } else if (directiveName == "marker") {
+                        extension->chordProLines[i]->setVisible(false);
+                        extension->chordProLines[i]->getProperties().set("type", "gp_marker");
                     } else if (directiveName.contains("start_of") || directiveName.contains("end_of") || (directiveName.length() == 3 && (directiveName.contains("so") || directiveName.contains("eo")))) {
                         extension->chordProLines[i]->setLookAndFeel(extension->chordProLabelLnF);
                         extension->chordProLines[i]->getProperties().set("type", "label"); 
