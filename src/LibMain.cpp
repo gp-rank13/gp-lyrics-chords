@@ -230,6 +230,12 @@ void LibMain::OnWidgetValueChanged(const std::string& widgetName, double newValu
     } 
 }
 
+void LibMain::OnWidgetCaptionChanged(const std::string &widgetName, const std::string &newValue) {
+    if (widgetName == WIDGET_CP_MARKER) {
+        ExtensionWindow::chordProScrollToMarker(newValue);
+    }
+}
+
 void LibMain::OnGlobalPlayStateChanged(double playing) {
     ExtensionWindow::playheadChange(playing > 0.0);
 }
