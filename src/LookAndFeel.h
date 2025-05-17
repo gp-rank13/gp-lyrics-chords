@@ -17,6 +17,7 @@ extern int chordProTranspose;
 extern FLAT_SHARP_DISPLAY chordProTransposeDisplay;
 extern bool searchCaratOn;
 extern Colour headerSongColor;
+extern bool displaySongNumbers;
 
 class buttonLookAndFeel : public LookAndFeel_V4 {
 public:
@@ -37,18 +38,20 @@ public:
     const int rows = 1;
 		
     // Button number
-    Font font1 (juce::jmax(button.getHeight () * 0.4f, 16.f));
-    g.setFont (font1);
-    auto buttonNumber = button.getProperties()["displayIndex"];
-    auto numberWidth = font1.getStringWidthFloat(button.getName()); 
-    g.drawFittedText (buttonNumber,
-      leftIndent, yIndent, numberWidth, buttonHeight - yIndent * 2,
-      Justification::right, rows, 0.5f);
-
+    float numberWidth = displaySongNumbers ? 0.0 : buttonHeight * 0.06f;
+    if (displaySongNumbers) {
+      Font font1 (juce::jmax(button.getHeight () * 0.4f, 16.f));
+      g.setFont (font1);
+      auto buttonNumber = button.getProperties()["displayIndex"];
+      numberWidth = font1.getStringWidthFloat(button.getName()); 
+      g.drawFittedText (buttonNumber,
+        leftIndent, yIndent, numberWidth, buttonHeight - yIndent * 2,
+        Justification::right, rows, 0.5f);
+    }
     // Button Name
     Font font2 (juce::jmax(button.getHeight () * 0.4f, 16.f));
     g.setFont (font2);
-    g.setColour (button.getToggleState () ? Colours::white : Colour(0xffc5c5c5));
+    g.setColour (button.getToggleState() ? Colours::white : Colour(0xffe5e5e5));
     g.drawFittedText (buttonText,
       (int)(leftIndent + (numberWidth * 1.5)), (int)yIndent, (int)(availableWidth - (numberWidth * 1.5)), (int)(buttonHeight - yIndent * 2.0),
       Justification::left, rows, 1.0f);
@@ -60,11 +63,21 @@ public:
     float borderSize = buttonArea.getHeight() * ((button.getProperties()["thickBorder"]) ? 0.08 : 0.04);
     float cornerSize = buttonArea.getHeight() * 0.08;
     Colour buttonColor = Colour::fromString(button.getProperties()["colour"].toString());
+    Colour borderColour = Colour::fromString(button.getProperties()["borderColor"].toString());
+
 
     if (button.getToggleState()) {
-      g.setColour (Colour(0xff6a6a6a));
+      if (buttonColor == Colour::fromString(DEFAULT_BUTTON_COLOR)) {
+        g.setColour (Colour(0xff6a6a6a));
+      } else {
+        g.setColour (buttonColor);
+      }   
     } else if (isButtonHighlighted && !isButtonDown) {
-      g.setColour (Colour(0xff2f2f2f));
+      if (buttonColor == Colour::fromString(DEFAULT_BUTTON_COLOR)) {
+        g.setColour (buttonColor.withBrightness(buttonColor.getBrightness() + 0.1f));
+      } else {
+        g.setColour (buttonColor.withBrightness(buttonColor.getBrightness() - 0.1f));
+      }
     } else if (isButtonDown) {
       g.setColour (Colour(0xff9a9a9a));
     } else {
@@ -72,7 +85,7 @@ public:
     }   
     g.fillRoundedRectangle (buttonArea, cornerSize);
     if (button.getToggleState()) {
-      g.setColour (Colours::white);
+      g.setColour (borderColour);
       buttonArea = buttonArea.withSizeKeepingCentre(buttonArea.getWidth() - borderSize, buttonArea.getHeight() - borderSize);      
       g.drawRoundedRectangle (buttonArea, cornerSize, borderSize);  
     }               

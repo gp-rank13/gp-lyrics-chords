@@ -201,7 +201,7 @@ public:
       indent, 10, getWidth(), titleHeight,
       Justification::left, 1, 1.0f);
 
-    runningY += titleHeight;
+    runningY += titleHeight / 2;
     
     g.setColour(Colour (0xFFD0D0D0));
     g.setFont (Font (30.0f, Font::plain).withTypefaceStyle ("Regular"));
@@ -210,6 +210,13 @@ public:
       Justification::left, 1, 1.0f);
     
     runningY += titleHeight;
+
+    g.setFont (Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
+    g.drawFittedText ("Display song numbers",
+      prefIndent, runningY, getWidth(), prefHeight,
+      Justification::left, 1, 1.0f);
+
+    runningY += prefHeight;
 
     g.setFont (Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
     g.drawFittedText ("Zero-based numbering",
@@ -256,7 +263,7 @@ public:
 
     runningY += prefHeight;
 
-    g.drawFittedText ("Prevent automatic hiding of autoscroll panel",
+    g.drawFittedText ("Automatically hide autoscroll panel",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
 
@@ -290,7 +297,7 @@ public:
       colorIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
 
-    runningY += titleHeight * 2;
+    runningY += titleHeight;
     g.setColour(Colour::fromString(HEADER_SONG_COLOR));
     g.fillRect(30, runningY + (prefHeight / 2), 200, 90);
 
@@ -447,6 +454,7 @@ public:
   void static selectButtonAndSubButton(int index, std::vector<std::string> buttonNames);
   void static selectSongForCurrentButton();
   void static updateClock(const String& formattedTime);
+  void static setDisplayNumbering(bool display);
   void static setZeroBasedNumbering(bool zeroBased);
   void static setImmediateSwitching(bool immediateSwitch);
   void static setLargeScrollArea(bool largeScrollArea);
@@ -461,6 +469,7 @@ public:
   void static chordProSetAutoscrollStartWithPlayhead(bool start);
   void static chordProSetTranspose(int transpose);
   void static updateViewportPositionForSubButtons();
+  void static toggleDisplayNumbering();
   void static toggleZeroBasedNumbering();
   void static toggleImmediateSwitching();
   void static toggleLargeScrollArea();  
@@ -478,7 +487,8 @@ public:
   void static scrollWindow(double value);
   void static setTitleBarName(const String& name);
   void static processPreferencesDefaults(StringPairArray prefs);
-  void static processPreferencesColors(StringPairArray prefs);
+  void static processPreferencesSongColors(StringPairArray prefs);
+  void static processPreferencesSongPartColors(StringPairArray prefs);
   void static processPreferencesChordProColors(StringPairArray prefs);
   void static processPreferencesWindowState(StringPairArray prefs);
   void static removeColorKeywordFromName(bool remove);
@@ -581,6 +591,8 @@ public:
   String static getWindowState();
   String static getDefaults();
   String static getChordProColors();
+  String static getSongColors();
+  String static getSongPartColors();
   void static setWindowState();
   Rectangle<int> static getWindowPositionAndSize();
   void static setSongPanelPosition(bool display);
@@ -617,6 +629,7 @@ public:
   OwnedArray<ChordDiagramKeyboard> chordProDiagramKeyboard;
   OwnedArray<ChordDiagramFretboard> chordProDiagramFretboard;
   StringPairArray buttonColors;
+  StringPairArray subButtonColors;
   StringPairArray chordProColors;
   ClockTimer clockTimer;
   RefreshTimer refreshTimer;

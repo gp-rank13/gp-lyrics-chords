@@ -26,6 +26,7 @@ bool autoscrollPanelPersist = false;
 bool autoscrollStartWithPlayhead = false;
 bool autoscrollPlaying = false;
 bool displayVariationsForSong = false;
+bool displaySongNumbers = true;
 bool searchCaratOn = true;
 extern std::string extensionPath;
 
@@ -54,7 +55,7 @@ ExtensionWindow::ExtensionWindow ()
     on.setImage(toggleOn);
     off.setImage(toggleOff);
 
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 9; ++i) {
         auto button = new DrawableButton(std::to_string(i), DrawableButton::ImageFitted);
         prefButtons.add(button);
         prefButtons[i]->setImages(&off, 0, 0, 0, &on);
@@ -620,6 +621,7 @@ void ExtensionWindow::resized()
     }
 
     // Don't display if only 1 sub button (except if not switching immediately)
+    /*
     bool switchRackSongImmediately = true;
     if (subButtonDisplayCount <= 1 && switchRackSongImmediately) {
         subButtonDisplayCount = 0;
@@ -628,7 +630,7 @@ void ExtensionWindow::resized()
     } else {
         highlight->setVisible(true);
     }
-
+    */
     // Calculate how many rows to display (based on column count)
     auto rows = (buttonDisplayCount + subButtonDisplayCount) / columns;
     rows = rows + 0.5 - (rows < 0); 
@@ -816,16 +818,20 @@ void ExtensionWindow::resized()
     preferencesCloseButton->setVisible(preferencesCloseButton->getX() > 250);
     preferencesCloseButton->setBounds(getWidth() - x - 70, 20, 30, 30 );
 
-    for (int i = 0; i < 4; ++i) {
-        prefButtons[i]->setBounds(50, 148 + 35 * i, 40, 40);
+    int prefRunningY = 123;
+    for (int i = 0; i < 5; ++i) {
+        prefButtons[i]->setBounds(50, prefRunningY, 40, 40);
+        prefRunningY += 35;
     }
-    prefButtons[4]->setBounds(50, 353, 40, 40);
-    prefButtons[5]->setBounds(50, 388, 40, 40);
-    prefButtons[6]->setBounds(50, 423, 40, 40);
-    prefButtons[7]->setBounds(50, 458, 40, 40);
-
+    prefRunningY += 65;
+    for (int i = 5; i < 9; ++i) {
+        prefButtons[i]->setBounds(50, prefRunningY, 40, 40);
+        prefRunningY += 35;
+    }
+    prefRunningY += 17;
     for (int i = 0; i < 4; ++i) {
-        prefColorButtons[i]->setBounds(50, 510 + 35 * i, 80, 30);
+        prefColorButtons[i]->setBounds(50, prefRunningY, 80, 30);
+        prefRunningY += 35;
     }
 
     int setlistCount = 0;
@@ -1177,6 +1183,19 @@ void ExtensionWindow::chordProSetLeftMarginLabels(bool onLeft) {
     chordProLeftLabels = onLeft;
 }
 
+void ExtensionWindow::setDisplayNumbering(bool display) {
+    extension->preferences->setProperty("DisplayNumbers", display); 
+    displaySongNumbers = display;
+    refreshUI();
+}
+
+void ExtensionWindow::toggleDisplayNumbering() {
+    bool status = extension->preferences->getProperty("DisplayNumbers");
+    extension->preferences->setProperty("DisplayNumbers", !status); 
+    displaySongNumbers = !status;
+    extension->resized();
+}
+
 void ExtensionWindow::toggleZeroBasedNumbering() {
     bool status = extension->preferences->getProperty("ZeroBasedNumbers");
     extension->preferences->setProperty("ZeroBasedNumbers", !status); 
@@ -1434,6 +1453,8 @@ void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
     int newButtonCount = buttonNames.size();
     int currentButtonCount = extension->buttons.size();
     bool border = extension->preferences->getProperty("ThickBorders");
+    String borderColor = extension->preferences->getProperty("BorderColor");
+
     if (newButtonCount == 0) {
         extension->noSongsLabel->setVisible(true);
     } else {
@@ -1444,13 +1465,30 @@ void ExtensionWindow::updateButtonNames(std::vector<std::string> buttonNames) {
         }
         for (auto i = 0; i < currentButtonCount; ++i) {
             if (i < newButtonCount) {
+                String name = buttonNames[i];
+                String color = DEFAULT_BUTTON_COLOR;
                 extension->buttons[i]->setButtonText(buttonNames[i]);
+                extension->buttons[i]->getProperties().set("name", name);
                 extension->buttons[i]->setVisible(true);
-                extension->buttons[i]->getProperties().set("colour", DEFAULT_BUTTON_COLOR);
+                StringArray keys = extension->buttonColors.getAllKeys();
+                for (int j = 0; j < keys.size(); ++j ) {
+                    if (name.contains(keys[j])) {
+                        color = extension->buttonColors.getValue(keys[j],"");
+                        if (extension->preferences->getProperty("RemoveColorKeywordFromName")) {
+                            name = name.replace(keys[j], "");
+                            name = name.replace("  ", " ");
+                            extension->buttons[i]->setButtonText(name);
+                        }
+                    }
+                }
+                extension->buttons[i]->getProperties().set("colour", color);
                 extension->buttons[i]->getProperties().set("thickBorder", border);
+                extension->buttons[i]->getProperties().set("borderColor", borderColor);
             } else {
                 extension->buttons[i]->setButtonText("");
                 extension->buttons[i]->setVisible(false);
+                extension->buttons[i]->getProperties().set("colour", DEFAULT_BUTTON_COLOR);
+                extension->buttons[i]->getProperties().set("name", "");
             }
         } 
     }
@@ -1464,7 +1502,7 @@ void ExtensionWindow::compareButtonNames(std::vector<std::string> newButtonNames
         refreshUI();
     } else {
         for (auto i = 0; i < newButtonCount; ++i) {
-            if (i < buttonCount && newButtonNames[i] != extension->buttons[i]->getButtonText()) {
+            if (i < buttonCount && newButtonNames[i] != extension->buttons[i]->getProperties()["name"]) {
                 refreshUI();
             }
         }
@@ -1509,10 +1547,10 @@ void ExtensionWindow::updateSubButtonNames(std::vector<std::string> buttonNames)
             extension->subButtons[i]->setButtonText(name);
             extension->subButtons[i]->getProperties().set("name", name);
             extension->subButtons[i]->setVisible(true);
-            StringArray keys = extension->buttonColors.getAllKeys();
+            StringArray keys = extension->subButtonColors.getAllKeys();
             for (int j = 0; j < keys.size(); ++j ) {
                 if (name.contains(keys[j])) {
-                    color = extension->buttonColors.getValue(keys[j],"");
+                    color = extension->subButtonColors.getValue(keys[j],"");
                     if (extension->preferences->getProperty("RemoveColorKeywordFromName")) {
                         name = name.replace(keys[j], "");
                         name = name.replace("  ", " ");
@@ -1830,25 +1868,27 @@ void ExtensionWindow::buttonClicked (Button* buttonThatWasClicked)
         compareButtonNames(lib->getSongNames());
         lib->setWidgetValue(WIDGET_CP_AUTOSCROLL_PLAY, 0.0);
     } else if (buttonThatWasClicked == prefButtons[0]) {
-        toggleZeroBasedNumbering();
+        toggleDisplayNumbering();
     } else if (buttonThatWasClicked == prefButtons[1]) {
-        toggleLargeScrollArea();
+        toggleZeroBasedNumbering();
     } else if (buttonThatWasClicked == prefButtons[2]) {
+        toggleLargeScrollArea();
+    } else if (buttonThatWasClicked == prefButtons[3]) {
        toggleThickBorders();
        displayPreferencesContainer(true);
-    } else if (buttonThatWasClicked == prefButtons[3]) {
+    } else if (buttonThatWasClicked == prefButtons[4]) {
         toggleVariationsInSetlistMode();
         displayPreferencesContainer(true);
-    } else if (buttonThatWasClicked == prefButtons[4]) {
+    } else if (buttonThatWasClicked == prefButtons[5]) {
         toggleLeftMarginLabels();
         displayPreferencesContainer(true);
-    } else if (buttonThatWasClicked == prefButtons[5]) {
+    } else if (buttonThatWasClicked == prefButtons[6]) {
         toggleSmallChordFont();
         displayPreferencesContainer(true);
-    } else if (buttonThatWasClicked == prefButtons[6]) {
+    } else if (buttonThatWasClicked == prefButtons[7]) {
         toggleAutoscrollPanelPersist();
         displayPreferencesContainer(true);
-    } else if (buttonThatWasClicked == prefButtons[7]) {
+    } else if (buttonThatWasClicked == prefButtons[8]) {
         toggleAutoscrollStartWithPlayhead();
         displayPreferencesContainer(true);
     } else if (buttonThatWasClicked == preferencesCloseButton.get()) {
@@ -1920,6 +1960,7 @@ void ExtensionWindow::finalize()
 }
 
 void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
+    setDisplayNumbering(prefs.getValue("DisplayNumbers", "") == "false" ? false : true);
     setZeroBasedNumbering(prefs.getValue("ZeroBasedNumbers", "") == "true" ? true : false);
     setLargeScrollArea(prefs.getValue("LargeScrollArea", "") == "true" ? true : false);
     removeColorKeywordFromName(prefs.getValue("RemoveColorKeywordFromName", "") == "true" ? true : false); 
@@ -1939,8 +1980,12 @@ void ExtensionWindow::processPreferencesDefaults(StringPairArray prefs) {
     extension->updatePreferencesWindow();
 }
 
-void ExtensionWindow::processPreferencesColors(StringPairArray prefs) {
+void ExtensionWindow::processPreferencesSongColors(StringPairArray prefs) {
     extension->buttonColors.addArray(prefs);
+}
+
+void ExtensionWindow::processPreferencesSongPartColors(StringPairArray prefs) {
+    extension->subButtonColors.addArray(prefs);
 }
 
 void ExtensionWindow::processPreferencesChordProColors(StringPairArray prefs) {
@@ -1973,22 +2018,24 @@ void ExtensionWindow::processPreferencesWindowState(StringPairArray prefs) {
 }
 
 void ExtensionWindow::updatePreferencesWindow() {
-     bool status = extension->preferences->getProperty("ZeroBasedNumbers");
+     bool status = extension->preferences->getProperty("DisplayNumbers");
      extension->prefButtons[0]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("LargeScrollArea");
+     status = extension->preferences->getProperty("ZeroBasedNumbers");
      extension->prefButtons[1]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("ThickBorders");
+     status = extension->preferences->getProperty("LargeScrollArea");
      extension->prefButtons[2]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("DisplayVariationNames");
+     status = extension->preferences->getProperty("ThickBorders");
      extension->prefButtons[3]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("LeftMarginLabels");
+     status = extension->preferences->getProperty("DisplayVariationNames");
      extension->prefButtons[4]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("SmallChordFont");
+     status = extension->preferences->getProperty("LeftMarginLabels");
      extension->prefButtons[5]->setToggleState(status, dontSendNotification);
-     status = extension->preferences->getProperty("AutoscrollPanelPersist");
+     status = extension->preferences->getProperty("SmallChordFont");
      extension->prefButtons[6]->setToggleState(status, dontSendNotification);
+     status = extension->preferences->getProperty("AutoscrollPanelPersist");
+     extension->prefButtons[7]->setToggleState(!status, dontSendNotification);
      status = extension->preferences->getProperty("AutoscrollStartWithPlayhead");
-     extension->prefButtons[7]->setToggleState(status, dontSendNotification);
+     extension->prefButtons[8]->setToggleState(status, dontSendNotification);
 
     // Preferences colour buttons
     String prefColorText;
@@ -2992,6 +3039,26 @@ String ExtensionWindow::getChordProColors() {
     return text;
 }
 
+String ExtensionWindow::getSongColors() {
+    String text;
+    StringArray keys = extension->buttonColors.getAllKeys();
+    StringArray values = extension->buttonColors.getAllValues();
+    for (int i = 0; i < keys.size(); ++i) { 
+        text += (keys[i] + " = " + values[i] + "\n");
+    }
+    return text;
+}
+
+String ExtensionWindow::getSongPartColors() {
+    String text;
+    StringArray keys = extension->subButtonColors.getAllKeys();
+    StringArray values = extension->subButtonColors.getAllValues();
+    for (int i = 0; i < keys.size(); ++i) { 
+        text += (keys[i] + " = " + values[i] + "\n");
+    }
+    return text;
+}
+
 String ExtensionWindow::getWindowState() {
     Rectangle<int> window = getWindowPositionAndSize();
     String positionSize = "PositionAndSize = " + String(window.getX()) + "," + String(window.getY()) + "," + String(window.getWidth()) + "," + String(window.getHeight());
@@ -3029,10 +3096,20 @@ void ExtensionWindow::savePreferences() {
     // ChordPro Colors
     String chordProColors = getChordProColors();
 
+    // Song Colors
+    String songColors = getSongColors();
+
+    // Song Part Colors
+    String songPartColors = getSongPartColors();
+
     // Window size/position
     String windowState = getWindowState();
 
-    content = "[Defaults] \n" + defaults + "\n[LyricChordColors]\n" + chordProColors + "\n[WindowLastSavedState]\n" + windowState;
+    content = "[Defaults] \n" + defaults 
+                + "\n[LyricChordColors]\n" + chordProColors 
+                + "\n[SongColors]\n" + songColors 
+                + "\n[SongPartColors]\n" + songPartColors 
+                + "\n[WindowLastSavedState]\n" + windowState;
     prefs.replaceWithText(content);
 }
 
@@ -3055,7 +3132,8 @@ void ExtensionWindow::readPreferencesFile() {
     StringArray lines = StringArray::fromLines(prefsFileText);
     StringArray keyValue;
     StringPairArray defaults;
-    StringPairArray colors;
+    StringPairArray songColors;
+    StringPairArray songPartColors;
     StringPairArray chordpro;
     StringPairArray windowstate;
     String line;
@@ -3069,18 +3147,21 @@ void ExtensionWindow::readPreferencesFile() {
             keyValue = StringArray::fromTokens(line,"=","");
             if (prefSection.contains("Defaults")) {
                 defaults.set(keyValue[0], keyValue[1]);
-            } else if (prefSection.contains("SongPartColors")) {
-                colors.set(keyValue[0], keyValue[1]);
             } else if (prefSection.contains("LyricChordColors")) {
                 chordpro.set(keyValue[0], keyValue[1]);
+            } else if (prefSection.contains("SongColors")) {
+                songColors.set(keyValue[0], keyValue[1]);
+            } else if (prefSection.contains("SongPartColors")) {
+                songPartColors.set(keyValue[0], keyValue[1]);
             } else if (prefSection.contains("WindowLastSavedState")) {
                 windowstate.set(keyValue[0], keyValue[1]);
             }
         }
     }
     processPreferencesDefaults(defaults);
-    processPreferencesColors(colors);
     processPreferencesChordProColors(chordpro);
+    processPreferencesSongColors(songColors);
+    processPreferencesSongPartColors(songPartColors);
     processPreferencesWindowState(windowstate);
 }
 
