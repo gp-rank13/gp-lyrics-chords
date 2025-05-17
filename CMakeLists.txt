@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
 set(PROJECT_NAME "GPLyricsChords") 
-set (PROJECT_VERSION "1.2.0")
+set (PROJECT_VERSION "1.3.0")
 set (PROJECT_TITLE "GP Lyrics/Chords")
 set (PROJECT_DESCR "Lyrics and Chords Viewer and Editor")
 string(TIMESTAMP TODAY "%d/%m/%Y")
