@@ -3138,23 +3138,22 @@ void ExtensionWindow::readPreferencesFile() {
     StringPairArray windowstate;
     String line;
     String prefSection;
-    for (int i = 0; i < lines.size(); ++i) { 
+ for (int i = 0; i < lines.size(); ++i) { 
         line = lines[i].toStdString();
         if (line.contains("[")) { // Preference Heading/Section
             prefSection = line.removeCharacters("[]");
         } else if (line.trim() != "") { // Process Preferences, assuming key/value pairs
-            line = line.removeCharacters(" ");
             keyValue = StringArray::fromTokens(line,"=","");
             if (prefSection.contains("Defaults")) {
-                defaults.set(keyValue[0], keyValue[1]);
+                defaults.set(keyValue[0].trim(), keyValue[1].trim());
             } else if (prefSection.contains("LyricChordColors")) {
-                chordpro.set(keyValue[0], keyValue[1]);
+                chordpro.set(keyValue[0].trim(), keyValue[1].trim());
             } else if (prefSection.contains("SongColors")) {
-                songColors.set(keyValue[0], keyValue[1]);
+                songColors.set(keyValue[0].trim(), keyValue[1].trim());
             } else if (prefSection.contains("SongPartColors")) {
-                songPartColors.set(keyValue[0], keyValue[1]);
+                songPartColors.set(keyValue[0].trim(), keyValue[1].trim());
             } else if (prefSection.contains("WindowLastSavedState")) {
-                windowstate.set(keyValue[0], keyValue[1]);
+                windowstate.set(keyValue[0].trim(), keyValue[1].trim());
             }
         }
     }
