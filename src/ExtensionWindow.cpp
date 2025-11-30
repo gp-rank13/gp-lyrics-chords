@@ -2997,7 +2997,7 @@ void ExtensionWindow::setSongPanelToFloating(bool isFloating) {
 
 void ExtensionWindow::playheadChange(bool playing) {
     if (extension == nullptr) return;
-    if (playing) {
+    if (playing && autoscrollStartWithPlayhead) {
         MessageManager::getInstance()->callAsync([]() {
             chordProAutoScrollPlay(true);
         });
