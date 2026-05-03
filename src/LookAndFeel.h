@@ -28,7 +28,7 @@ public:
 		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
 			: TextButton::textColourOffId)
       .withMultipliedAlpha (0.5f));
-    
+
     const auto buttonWidth = (double) button.getWidth();
     const auto buttonHeight = (double) button.getHeight();
     const String buttonText = button.getButtonText();
@@ -36,14 +36,14 @@ public:
 		const auto leftIndent = buttonWidth > 160 ? yIndent * 2 : 5;
     auto availableWidth = buttonWidth - leftIndent;
     const int rows = 1;
-		
+
     // Button number
     float numberWidth = displaySongNumbers ? 0.0 : buttonHeight * 0.06f;
     if (displaySongNumbers) {
       Font font1 (juce::jmax(button.getHeight () * 0.4f, 16.f));
       g.setFont (font1);
       auto buttonNumber = button.getProperties()["displayIndex"];
-      numberWidth = font1.getStringWidthFloat(button.getName()); 
+      numberWidth = font1.getStringWidthFloat(button.getName());
       g.drawFittedText (buttonNumber,
         leftIndent, yIndent, numberWidth, buttonHeight - yIndent * 2,
         Justification::right, rows, 0.5f);
@@ -71,7 +71,7 @@ public:
         g.setColour (Colour(0xff6a6a6a));
       } else {
         g.setColour (buttonColor);
-      }   
+      }
     } else if (isButtonHighlighted && !isButtonDown) {
       if (buttonColor == Colour::fromString(DEFAULT_BUTTON_COLOR)) {
         g.setColour (buttonColor.withBrightness(buttonColor.getBrightness() + 0.1f));
@@ -82,13 +82,13 @@ public:
       g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (buttonColor);
-    }   
+    }
     g.fillRoundedRectangle (buttonArea, cornerSize);
     if (button.getToggleState()) {
       g.setColour (borderColour);
-      buttonArea = buttonArea.withSizeKeepingCentre(buttonArea.getWidth() - borderSize, buttonArea.getHeight() - borderSize);      
-      g.drawRoundedRectangle (buttonArea, cornerSize, borderSize);  
-    }               
+      buttonArea = buttonArea.withSizeKeepingCentre(buttonArea.getWidth() - borderSize, buttonArea.getHeight() - borderSize);
+      g.drawRoundedRectangle (buttonArea, cornerSize, borderSize);
+    }
   }
 };
 
@@ -134,7 +134,7 @@ public:
         g.setColour (Colour(0xff6A6A6A));
       } else {
         g.setColour (buttonColor);
-      }      
+      }
     } else if (isButtonHighlighted && !isButtonDown) {
       if (buttonColor == Colour::fromString(DEFAULT_SUBBUTTON_COLOR)) {
         g.setColour (buttonColor.withBrightness(buttonColor.getBrightness() + 0.1f));
@@ -145,19 +145,19 @@ public:
       g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (buttonColor);
-    }   
-    g.fillRoundedRectangle (buttonArea, cornerSize);  
+    }
+    g.fillRoundedRectangle (buttonArea, cornerSize);
     if (button.getToggleState()) {
       g.setColour (borderColour);
       buttonArea = buttonArea.withSizeKeepingCentre(buttonArea.getWidth() - borderSize, buttonArea.getHeight() - borderSize);
-      g.drawRoundedRectangle (buttonArea, cornerSize, borderSize);  
+      g.drawRoundedRectangle (buttonArea, cornerSize, borderSize);
 
       // Button Highlight
       highlightArea.setX(padding/4.0);
       highlightArea.setWidth(padding/6.0);
       g.setColour (Colours::white);
-      g.fillRoundedRectangle (highlightArea, borderSize);  
-    }            
+      g.fillRoundedRectangle (highlightArea, borderSize);
+    }
   }
 };
 
@@ -183,7 +183,7 @@ public:
 class colorButtonLookAndFeel : public LookAndFeel_V4 {
 public:
 	void drawButtonText (Graphics&, TextButton&, bool, bool) {};
-  void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour& colour, bool isButtonHighlighted, bool isButtonDown) 
+  void drawButtonBackground (juce::Graphics& g, juce::Button& button, const juce::Colour& colour, bool isButtonHighlighted, bool isButtonDown)
   {
      auto buttonArea = button.getLocalBounds().toFloat();
      g.setColour(colour);
@@ -204,7 +204,7 @@ public:
 		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
 			: TextButton::textColourOffId)
       .withMultipliedAlpha (0.8f));
-    
+
     const auto buttonWidth = (double) button.getWidth();
     const auto buttonHeight = (double) button.getHeight();
     const String buttonText = button.getButtonText();
@@ -236,7 +236,7 @@ public:
       g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (buttonColor);
-    }   
+    }
     g.fillRoundedRectangle (buttonArea, cornerSize);
   }
 };
@@ -250,7 +250,7 @@ public:
 		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
 			: TextButton::textColourOffId)
       .withMultipliedAlpha (0.8f));
-    
+
     const auto buttonWidth = (double) button.getWidth();
     const auto buttonHeight = (double) button.getHeight();
     const String buttonText = button.getButtonText();
@@ -282,7 +282,7 @@ public:
       g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (buttonColor);
-    }   
+    }
     g.fillRoundedRectangle (buttonArea, cornerSize);
   }
 };
@@ -297,12 +297,12 @@ public:
 		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
 			: TextButton::textColourOffId)
       .withMultipliedAlpha (0.5f));
-    
+
 		const int yIndent = button.proportionOfHeight (0.1f) * 2;
 		const int cornerSize = jmin (button.getHeight (), button.getWidth ()) / 2;
 		const int leftIndent = cornerSize / (button.isConnectedOnLeft () ?
                   yIndent * 2 : yIndent);
-		const int rightIndent = cornerSize / (button.isConnectedOnRight () ? 
+		const int rightIndent = cornerSize / (button.isConnectedOnRight () ?
                   yIndent * 2 : yIndent);
 		const int textWidth = button.getWidth () - leftIndent - rightIndent;
     const int rows = 1;
@@ -315,7 +315,7 @@ public:
       g.drawFittedText (buttonNumber,
       leftIndent*4, yIndent, numberWidth, button.getHeight () - yIndent * 2,
       Justification::right, rows, 0.5f);
-      
+
       // Button Name
       Font font2 (juce::jmax(button.getHeight () * 0.4f, 16.f));
 		  g.setFont (font2);
@@ -336,20 +336,20 @@ public:
 
     if (button.getToggleState()) {
       g.setColour (Colour(0xff6a6a6a));
-      
+
     } else if (isButtonHighlighted && !isButtonDown) {
       g.setColour (Colour(0xff2f2f2f));
     } else if (isButtonDown) {
-      g.setColour (Colour(0xff9a9a9a));      
+      g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (myColour);
-      
-    }   
+
+    }
     g.fillRoundedRectangle (buttonArea, cornerSize);
     if (button.getToggleState()) {
       g.setColour (Colours::red);
-      g.drawRoundedRectangle (buttonArea, cornerSize, 1.f);  
-    }               
+      g.drawRoundedRectangle (buttonArea, cornerSize, 1.f);
+    }
   }
 };
 
@@ -385,7 +385,7 @@ public:
   void drawLabel (Graphics& g, Label& label) {
     //g.fillAll (headerRackspaceColor);
     auto labelArea = label.getLocalBounds();
-    
+
     g.setFont (Font (25.00f, Font::plain).withTypefaceStyle ("Regular"));
     g.setColour (Colours::white);
     String title = (labelArea.getWidth() < 240 ? "Racks" : "Rackspaces");
@@ -404,7 +404,7 @@ public:
 		const int cornerSize = jmin (button.getHeight (), button.getWidth ()) / 2;
 		const int leftIndent = cornerSize / (button.isConnectedOnLeft () ?
                   yIndent * 2 : yIndent);
-		const int rightIndent = cornerSize / (button.isConnectedOnRight () ? 
+		const int rightIndent = cornerSize / (button.isConnectedOnRight () ?
                   yIndent * 2 : yIndent);
 		const int textWidth = button.getWidth () - leftIndent - rightIndent;
 
@@ -465,7 +465,7 @@ public:
           15, 0, label.getWidth(), label.getHeight (),
           Justification::centredLeft, 1, 1.0f);
     }
-    
+
     if (searchCaratOn) {
       g.setFont(font);
       g.setColour(Colours::black);
@@ -491,9 +491,33 @@ public:
     Font monoFont = font;
     monoFont.setTypefaceName(Font::getDefaultMonospacedFontName());
 
+    // Lyric Colour
+    Colour lyricColor = chordProLyricColor;
+    String customLyricColor = label.getProperties()["textcolour"];
+    if (customLyricColor != "") {
+      lyricColor = Colour::fromString(customLyricColor);
+      String compare = chordProDarkMode ? CP_DARK_BACKGROUND_COLOR : CP_LIGHT_BACKGROUND_COLOR;
+      if (lyricColor == Colour::fromString(compare)) {
+        lyricColor = chordProDarkMode ? Colour::fromString(CP_LIGHT_BACKGROUND_COLOR)
+                                      : Colour::fromString(CP_DARK_BACKGROUND_COLOR);
+      }
+    }
+
+    // Chord Colour
+    Colour chordColor = chordProChordColor;
+    String customChordColor = label.getProperties()["chordcolour"];
+    if (customChordColor != "") {
+      chordColor = Colour::fromString(customChordColor);
+      String compare = chordProDarkMode ? CP_DARK_BACKGROUND_COLOR : CP_LIGHT_BACKGROUND_COLOR;
+      if (chordColor == Colour::fromString(compare)) {
+        chordColor = chordProDarkMode ? Colour::fromString(CP_LIGHT_BACKGROUND_COLOR)
+                                      : Colour::fromString(CP_DARK_BACKGROUND_COLOR);
+      }
+    }
+
     if (chordProMonospaceFont) {
       font.setTypefaceName(Font::getDefaultMonospacedFontName());
-      chordFont.setTypefaceName(Font::getDefaultMonospacedFontName());      
+      chordFont.setTypefaceName(Font::getDefaultMonospacedFontName());
     } else {
       font = font.withTypefaceStyle("Regular").withExtraKerningFactor(0.06f);
       chordFont = chordFont.withTypefaceStyle("Regular");
@@ -506,23 +530,23 @@ public:
       } else {
         chordFont = chordFont.withHeight(label.getHeight() * 0.5f);
       }
-    } 
+    }
     if (label.getProperties()["section"] == "chorus" && label.getProperties()["type"] != "directive") {
       g.setColour (chordProLyricColor);
       g.fillRect((int)(leftPad - (25 * chordProFontSize)), labelArea.getY(), (int)(5 * chordProFontSize), labelArea.getHeight());
     }
-    
+
     if (chordProLeftLabels) {
       String sectionLabel = label.getProperties()["sectionLabel"];
       g.setFont (labelFont);
       g.setColour (chordProLyricColor.withAlpha(0.8f));
-      g.drawFittedText ( sectionLabel,
+      g.drawFittedText (sectionLabel,
             0, 0, (int)(leftPad - (CP_DEFAULT_LEFT_MARGIN * chordProFontSize)), label.getHeight(),
             Justification::bottomRight, 1, 1.0f);
     }
 
     StringArray words = StringArray::fromTokens(label.getText(),false);
-    for (int i = 0; i < words.size(); ++i) { 
+    for (int i = 0; i < words.size(); ++i) {
       wordParts = StringArray::fromTokens(words[i],"[]","");
       if (i == 0 || label.getProperties()["type"] == "chordOnly") wordParts.removeEmptyStrings();
       String chordCheck;
@@ -530,17 +554,17 @@ public:
 
       for (int j = 0; j < wordParts.size(); ++j) {
         chordCheck = "["+wordParts[j]+"]";
-        if (words[i].contains(chordCheck) || label.getProperties()["type"] == "chordOnly") { // Is a chord    
+        if (words[i].contains(chordCheck) || label.getProperties()["type"] == "chordOnly") { // Is a chord
           chord = wordParts[j];
           g.setFont (chordFont);
-          g.setColour(chordProChordColor);
+          g.setColour(chordColor);
           if (lastWordPosition < lastChordPosition) {
             lastWordPosition = lastChordPosition;
-          } 
+          }
 
           // Apply transpose and flat/sharp conversion
           chord = ChordPro::CP_Transpose(chord, chordProTranspose, chordProTransposeDisplay);
-        
+
           if (chordProSmallChordFont && label.getProperties()["type"] == "chordAndLyrics") {
             g.drawFittedText (chord,
             lastWordPosition + leftPad, label.getHeight() * 0.05, label.getWidth(), label.getHeight() / 2,
@@ -557,7 +581,7 @@ public:
             lastChordPosition = lastChordPosition + font.getStringWidthFloat("  ");  // Minimum gap for chord only lines
           }
         } else {
-          g.setColour (chordProLyricColor);
+          g.setColour (lyricColor);
           g.setFont (font);
           g.drawFittedText ( wordParts[j],
             lastWordPosition + leftPad, 0, label.getWidth(), label.getHeight(),
@@ -566,7 +590,7 @@ public:
           lastWordPosition += font.getStringWidthFloat(wordParts[j]);
         }
       }
-      lastWordPosition += font.getStringWidthFloat(" "); 
+      lastWordPosition += font.getStringWidthFloat(" ");
     }
   }
 };
@@ -666,14 +690,14 @@ public:
   void drawLabel (Graphics& g, Label& label) {
     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
     Font font (Font (label.getHeight() * 1.0f, Font::plain));
-   
+
     font.setTypefaceName(Font::getDefaultMonospacedFontName());
     g.setFont (font);
     int gridLength = label.getProperties()["gridBarLength"];
     int gridBars = label.getProperties()["gridBars"];
     int gridBeats = jmax((int)label.getProperties()["gridBeats"], 1);
     gridLength = juce::jmax(gridLength > gridBeats ? gridLength + 4 : gridLength, 8);
-    
+
     // Background
     Font fontSpacer = font;
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
@@ -695,7 +719,7 @@ public:
     int barCount = 1;
     StringArray parts = StringArray::fromTokens(label.getText(),false);
     parts.removeEmptyStrings();
-    for (int i = 0; i < parts.size(); ++i) { 
+    for (int i = 0; i < parts.size(); ++i) {
       g.setColour (chordProLyricColor.withAlpha(0.8f));
       juce::AttributedString barCharacter;
       juce::String partCharacter = parts[i];
@@ -746,7 +770,7 @@ public:
             g.drawFittedText (partCharacter,
               leftPad + runningTextWidth, 0, label.getWidth(), label.getHeight (),
               Justification::centredLeft, 1, 1.0f);
-          } 
+          }
           runningTextWidth += (int)(font.getStringWidthFloat(" ") * (float)(gridLength / gridBeats));
         }
 
@@ -761,7 +785,7 @@ public:
       g.drawFittedText ( sectionLabel,
             0, 0, (int)(leftPad - (CP_DEFAULT_LEFT_MARGIN * chordProFontSize)), label.getHeight(),
             Justification::bottomRight, 1, 1.0f);
-    }    
+    }
   }
 };
 
@@ -776,7 +800,7 @@ public:
       fontHeight = button.getHeight() * 0.5;
     } else if (button.getName() == "transposeSharp") {
       fontHeight = button.getHeight() * 0.75;
-    } 
+    }
 		Font font (fontHeight);
     auto height = ((button.getName() == "Mono" || button.getName() == "Create" || button.getName() == "Save") ? button.getHeight() : button.getHeight() * 0.85);
 		if (button.getName() == "transposeFlat" || button.getName() == "transposeSharp") {
@@ -813,17 +837,17 @@ public:
     auto buttonArea = button.getLocalBounds().toFloat().reduced (0.5f);
     float cornerSize = 5.f;
     if (button.getToggleState()) {
-      g.setColour (Colour(0xff6a6a6a)); 
+      g.setColour (Colour(0xff6a6a6a));
     } else if (isButtonHighlighted && !isButtonDown) {
       g.setColour (Colours::darkgrey);
     } else if (isButtonDown) {
       g.setColour (Colour(0xff9a9a9a));
     } else {
       g.setColour (Colours::darkgrey.withLightness(0.15f));
-    }   
+    }
     g.fillRoundedRectangle (buttonArea, cornerSize);
     g.setColour(Colours::white.withAlpha(0.1f));
-    g.drawRoundedRectangle (buttonArea, cornerSize, 2.f);   
+    g.drawRoundedRectangle (buttonArea, cornerSize, 2.f);
   }
 };
 

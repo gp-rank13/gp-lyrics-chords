@@ -2255,6 +2255,10 @@ void ExtensionWindow::chordProProcessText(String text) {
     StringArray directiveParts;
     String directiveName;
     String directiveValue;
+    String textColour = "";
+    String chordColour = "";
+    bool textColourLine = false;
+    bool chordColourLine = false;
     bool tabLine = false;
     bool gridLine = false;
     int gridMaxChordLength = 0;
@@ -2287,6 +2291,34 @@ void ExtensionWindow::chordProProcessText(String text) {
                     } else if (directiveName == "comment" || directiveName == "c" || directiveName == "comment_italic" || directiveName == "ci" || directiveName == "comment_box" || directiveName == "cb" || directiveName == "highlight") {
                         extension->chordProLines[i]->setLookAndFeel(extension->chordProCommentLnF);
                         extension->chordProLines[i]->getProperties().set("type", "comment");
+                    } else if (directiveName == "textcolour") {
+                        extension->chordProLines[i]->setVisible(false);
+                        Colour colour;
+                        if (directiveValue.contains("#")) {
+                            if (std::regex_match(directiveValue.toStdString(), std::regex("\\#[a-zA-Z0-9]{6}"))) {
+                                colour = Colour::fromString("ff" + directiveValue.removeCharacters("#").trim());
+                            } else {
+                                colour = chordProLyricColor;
+                            }
+                        } else {
+                            colour = Colours::findColourForName(directiveValue, chordProLyricColor);
+                        }
+                        textColourLine = true;
+                        textColour = colour.toString();
+                    } else if (directiveName == "chordcolour") {
+                        extension->chordProLines[i]->setVisible(false);
+                        Colour colour;
+                        if (directiveValue.contains("#")) {
+                            if (std::regex_match(directiveValue.toStdString(), std::regex("\\#[a-zA-Z0-9]{6}"))) {
+                                colour = Colour::fromString("ff" + directiveValue.removeCharacters("#").trim());
+                            } else {
+                                colour = chordProChordColor;
+                            }
+                        } else {
+                            colour = Colours::findColourForName(directiveValue, chordProChordColor);
+                        }
+                        chordColourLine = true;
+                        chordColour = colour.toString();
                     } else if (directiveName == "songpartname") {
                         extension->chordProLines[i]->setVisible(false);
                         extension->chordProLines[i]->getProperties().set("type", "gp_songpartname");
@@ -2398,6 +2430,7 @@ void ExtensionWindow::chordProProcessText(String text) {
                     directiveName = line.removeCharacters(" ");
                     directiveValue = "";
                 }
+                // Additional processing for multi-line directives or without values
                 if (directiveName == "start_of_tab" || directiveName == "sot") {
                     tabLine = true;
                     firstSectionLine = true;
@@ -2422,6 +2455,16 @@ void ExtensionWindow::chordProProcessText(String text) {
                 } else if (directiveName.startsWith("start_of_")) {
                     firstSectionLine = true;
                     sectionLabel = directiveValue;
+                } else if (directiveName == "textcolour") {
+                    if (directiveValue == "") {
+                        textColourLine = false;
+                        textColour = "";
+                    }
+                } else if (directiveName == "chordcolour") {
+                    if (directiveValue == "") {
+                        chordColourLine = false;
+                        chordColour = "";
+                    }
                 } else {
                     firstSectionLine = false;
                 }
@@ -2466,6 +2509,9 @@ void ExtensionWindow::chordProProcessText(String text) {
                     line = line.replace("|  |","||").replace("| :","|:").replace(": |",":|");
                 } else if (chorusLine) {
                     extension->chordProLines[i]->getProperties().set("section", "chorus");
+                } else if (textColourLine || chordColourLine) {
+                    extension->chordProLines[i]->getProperties().set("textcolour", textColour);
+                    extension->chordProLines[i]->getProperties().set("chordcolour", chordColour);
                 }
                 if (firstSectionLine) {
                     extension->chordProLines[i]->getProperties().set("sectionLabel", sectionLabel);
