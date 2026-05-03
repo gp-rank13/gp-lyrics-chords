@@ -18,7 +18,7 @@ using namespace juce;
 extern Colour viewPortBackground;
 extern bool chordProTwoColumnsExtern;
 
-class DraggableComponent : public Component 
+class DraggableComponent : public Component
 {
 public:
   DraggableComponent() { constrainer.setMinimumOnscreenAmounts (0xffffff, 0xffffff, 0xffffff, 0xffffff); }
@@ -40,13 +40,13 @@ public:
       dragger.dragComponent (this, e, &constrainer);
       dragging = true;
   }
-  void paint(Graphics& g) override 
-  { 
+  void paint(Graphics& g) override
+  {
       if (isMouseOver(true)) {
                g.setColour (Colour (0xff3B4D60));
-      } else { 
+      } else {
             g.setColour (Colour (0xff555555));
-      } 
+      }
       const juce::Rectangle<float> area = getLocalBounds().toFloat();
       g.fillRect(area.withWidth(5)); // Override displayed width of separator
   }
@@ -97,7 +97,7 @@ public:
     auto brightness = (viewPortBackground.getBrightness() == 0.0) ? viewPortBackground.getBrightness() + 0.2 :  viewPortBackground.getBrightness() - 0.2;
     if (viewPortBackground == Colour::fromString(CP_DARK_IMAGES_BACKGROUND_COLOR)) brightness = 0.2;
     g.fillAll (viewPortBackground.withBrightness(brightness).withAlpha(0.9f));
-  } 
+  }
 };
 
 class ChordProContainer : public Component
@@ -119,14 +119,14 @@ public:
       int height = getHeight();
       int windowHeight = getParentComponent()->getHeight();
       int separatorCount = (int)(height / windowHeight);
-      for (int i = 0; i < separatorCount; ++i) { 
+      for (int i = 0; i < separatorCount; ++i) {
         int y = windowHeight * (i + 1) - 3;
         g.fillRect(0, y, getWidth(), 5);
       }
       // Page numbers
       g.setFont(Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
       g.setColour(pageNumberColour);
-      for (int i = 0; i < separatorCount * 2; ++i) { 
+      for (int i = 0; i < separatorCount * 2; ++i) {
         int x = (i % 2 + 1) * getWidth() / 2 - 30;
         int y = (floor(i / 2) + 1) * windowHeight - 30;
         auto bounds = Rectangle(x, y, 30, 20);
@@ -143,7 +143,7 @@ public:
   void paint(Graphics& g) override {
     g.fillAll (backgroundColour);
   };
-  
+
   void setBackgroundColour(Colour newColour) {
     backgroundColour = newColour;
     repaint();
@@ -202,13 +202,13 @@ public:
       Justification::left, 1, 1.0f);
 
     runningY += titleHeight / 2;
-    
+
     g.setColour(Colour (0xFFD0D0D0));
     g.setFont (Font (30.0f, Font::plain).withTypefaceStyle ("Regular"));
     g.drawFittedText ("Song List",
       indent, runningY, getWidth(), subtitleHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += titleHeight;
 
     g.setFont (Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
@@ -224,19 +224,19 @@ public:
       Justification::left, 1, 1.0f);
 
     runningY += prefHeight;
-    
+
     g.drawFittedText ("Large scroll area",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += prefHeight;
 
     g.drawFittedText ("Thick borders for selected songs/parts",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += prefHeight;
-    
+
     g.drawFittedText ("Display variation names instead of song part names",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
@@ -249,12 +249,12 @@ public:
       Justification::left, 1, 1.0f);
 
     runningY += titleHeight;
-    
+
     g.setFont (Font (20.0f, Font::plain).withTypefaceStyle ("Regular"));
     g.drawFittedText ("Display section labels in left margin",
       prefIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += prefHeight;
 
     g.drawFittedText ("Use smaller font for chords above lyrics",
@@ -284,13 +284,13 @@ public:
     g.drawFittedText ("Light mode lyric color",
       colorIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += prefHeight;
 
     g.drawFittedText ("Dark mode chord color",
       colorIndent, runningY, getWidth(), prefHeight,
       Justification::left, 1, 1.0f);
-    
+
     runningY += prefHeight;
 
     g.drawFittedText ("Dark mode lyric color",
@@ -370,7 +370,7 @@ public:
                     );
       colourSelector->setName("ColorSelector");
       colourSelector->setCurrentColour( findColour (TextButton::buttonColourId) );
-      colourSelector->addChangeListener(this); 
+      colourSelector->addChangeListener(this);
       colourSelector->setColour(ColourSelector::backgroundColourId, Colours::black);
       colourSelector->setSize(200, 200);
       juce::CallOutBox::launchAsynchronously(std::move(colourSelector), getScreenBounds(),nullptr);
@@ -449,7 +449,7 @@ public:
   void static selectButton(int index);
   void static selectSetlistButton(int index);
   bool static isSubButtonSelected(int index);
-  bool static isSubButtonsCollapsed(); 
+  bool static isSubButtonsCollapsed();
   void static selectSubButton(int index);
   void static selectButtonAndSubButton(int index, std::vector<std::string> buttonNames);
   void static selectSongForCurrentButton();
@@ -472,8 +472,8 @@ public:
   void static toggleDisplayNumbering();
   void static toggleZeroBasedNumbering();
   void static toggleImmediateSwitching();
-  void static toggleLargeScrollArea();  
-  void static toggleThickBorders();  
+  void static toggleLargeScrollArea();
+  void static toggleThickBorders();
   void static toggleLockToSetlistMode();
   void static toggleVariationsInSetlistMode();
   void static toggleLeftMarginLabels();
@@ -510,7 +510,7 @@ public:
   void static songSearchBackspace();
   void static songSearchSelect();
   void static clearSearch();
-  void static displaySearchCarat(); 
+  void static displaySearchCarat();
   bool static isActiveSearch();
   void static filterButtons(String text);
   Image static getWindowIcon();
@@ -560,7 +560,7 @@ public:
   SharedResourcePointer<chordProTitle> chordProTitleLnF;
   SharedResourcePointer<chordProSubTitle> chordProSubTitleLnF;
   SharedResourcePointer<chordProComment> chordProCommentLnF;
-  SharedResourcePointer<chordProLabel> chordProLabelLnF;  
+  SharedResourcePointer<chordProLabel> chordProLabelLnF;
   SharedResourcePointer<chordProTab> chordProTabLnF;
   SharedResourcePointer<chordProGrid> chordProGridLnF;
   SharedResourcePointer<popOverLookAndFeel> popOverLnf;
@@ -575,6 +575,7 @@ public:
   int chordProSongScrollDuration = 0;
   int chordProRunningPause = 0;
   int chordProTotalPause = 0;
+  int chordProPagedOffset = 0;
   int64 chordProScrollStart = 0;
   int64 chordProScrollPaused = 0;
   std::vector<std::pair<int,int>> chordProPause;
@@ -599,7 +600,7 @@ public:
   void static setSongPanelToFloating(bool isFloating);
   void updatePreferencesWindow();
   void updatePreferencesColors();
-  
+
   std::unique_ptr<MyDocumentWindow> extensionWindow;
   TooltipWindow tooltipWindow;
   Viewport viewport;
@@ -676,7 +677,7 @@ public:
   std::unique_ptr<TextButton> transposeUp;
   std::unique_ptr<TextButton> transposeDown;
   std::unique_ptr<TextButton> transposeSharp;
-  std::unique_ptr<TextButton> transposeFlat; 
+  std::unique_ptr<TextButton> transposeFlat;
   std::unique_ptr<TextButton> setlistButton;
   std::unique_ptr<TextButton> createInvertedImage;
   std::unique_ptr<TextButton> editorSaveButton;
