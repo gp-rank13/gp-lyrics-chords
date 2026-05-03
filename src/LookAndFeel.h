@@ -698,6 +698,30 @@ public:
     int gridBeats = jmax((int)label.getProperties()["gridBeats"], 1);
     gridLength = juce::jmax(gridLength > gridBeats ? gridLength + 4 : gridLength, 8);
 
+    // Lyric Colour
+    Colour lyricColor = chordProLyricColor;
+    String customLyricColor = label.getProperties()["textcolour"];
+    if (customLyricColor != "") {
+      lyricColor = Colour::fromString(customLyricColor);
+      String compare = chordProDarkMode ? CP_DARK_BACKGROUND_COLOR : CP_LIGHT_BACKGROUND_COLOR;
+      if (lyricColor == Colour::fromString(compare)) {
+        lyricColor = chordProDarkMode ? Colour::fromString(CP_LIGHT_BACKGROUND_COLOR)
+                                      : Colour::fromString(CP_DARK_BACKGROUND_COLOR);
+      }
+    }
+
+    // Chord Colour
+    Colour chordColor = chordProChordColor;
+    String customChordColor = label.getProperties()["chordcolour"];
+    if (customChordColor != "") {
+      chordColor = Colour::fromString(customChordColor);
+      String compare = chordProDarkMode ? CP_DARK_BACKGROUND_COLOR : CP_LIGHT_BACKGROUND_COLOR;
+      if (chordColor == Colour::fromString(compare)) {
+        chordColor = chordProDarkMode ? Colour::fromString(CP_LIGHT_BACKGROUND_COLOR)
+                                      : Colour::fromString(CP_DARK_BACKGROUND_COLOR);
+      }
+    }
+
     // Background
     Font fontSpacer = font;
     int textWidth = (int) (fontSpacer.getStringWidthFloat(" ") * gridLength * gridBars);
@@ -708,7 +732,7 @@ public:
 
     // Post Comments
     Font commentFont (Font (label.getHeight(), Font::plain).withTypefaceStyle ("Regular"));
-    g.setColour (chordProLyricColor.withAlpha(0.8f));
+    g.setColour (lyricColor.withAlpha(0.8f));
     g.setFont(commentFont);
     g.drawFittedText (label.getProperties()["gridComment"],
           leftPad + textWidth + label.getHeight(), 0, label.getWidth() - textWidth - leftPad, label.getHeight(),
@@ -755,7 +779,7 @@ public:
         // Draw Chords
         font = font.withHeight(label.getHeight());
         g.setFont(font);
-        g.setColour(chordProChordColor);
+        g.setColour(chordColor);
         if (partCharacter.getIntValue() > 0) { // Volta
           g.setColour( chordProLyricColor.withAlpha(0.6f));
           g.setFont(font.withHeight(label.getHeight() * 0.5f));

@@ -2509,14 +2509,15 @@ void ExtensionWindow::chordProProcessText(String text) {
                     line = line.replace("|  |","||").replace("| :","|:").replace(": |",":|");
                 } else if (chorusLine) {
                     extension->chordProLines[i]->getProperties().set("section", "chorus");
-                } else if (textColourLine || chordColourLine) {
-                    extension->chordProLines[i]->getProperties().set("textcolour", textColour);
-                    extension->chordProLines[i]->getProperties().set("chordcolour", chordColour);
                 }
                 if (firstSectionLine) {
                     extension->chordProLines[i]->getProperties().set("sectionLabel", sectionLabel);
                     sectionLabel = "";
                     firstSectionLine = false;
+                }
+                if (textColourLine || chordColourLine) {
+                    extension->chordProLines[i]->getProperties().set("textcolour", textColour);
+                    extension->chordProLines[i]->getProperties().set("chordcolour", chordColour);
                 }
                 if (line.contains("[")) {
                     String excludeChords = std::regex_replace(line.toStdString(), std::regex("\\[(.*?)\\]"), "");
