@@ -18,7 +18,7 @@ jobs:
             matrix:
                 config:
                     - name: "macOS - universal"
-                      os: "macos-13"
+                      os: "macos-14"
                       cmake_preset: "mac-universal"
                       build_config: "Release"
                     - name: "Windows"
@@ -27,7 +27,7 @@ jobs:
                       build_config: "Release"
         env:
             # Unfortunately, Ccache is not available yet for Windows and MSVC
-            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-13' }}
+            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-14' }}
 
             # To store the build extension later, we store it inside the build cache
             CMAKE_ADDITIONAL_OPTIONS: "-D 'GIG_PERFORMER_EXTENSIONS_DIRECTORY=${{ github.workspace }}/build/install'"
