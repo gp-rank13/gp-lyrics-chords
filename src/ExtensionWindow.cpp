@@ -3228,6 +3228,15 @@ void ExtensionWindow::logToGP(std::string text) {
         lib->consoleLog(text);
 }
 
+void ExtensionWindow::mouseMagnify(const MouseEvent&, float scale) {
+    if (scale >= 1.0) {
+        chordProFontSize = jmin(chordProFontSize * scale, CP_MAX_FONT_SIZE);
+    } else {
+        chordProFontSize = jmax(chordProFontSize * scale, CP_MIN_FONT_SIZE);
+    }
+    resized();
+}
+
 void MyDocumentWindow::closeButtonPressed() {
     ExtensionWindow::savePreferences();
     ExtensionWindow::displayWindow(false);
