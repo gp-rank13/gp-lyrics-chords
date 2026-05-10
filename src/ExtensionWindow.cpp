@@ -941,6 +941,14 @@ void ExtensionWindow::resized()
                 } else if (chordProLines[i]->getName() == "autoscrollSpacer") {
                     // Don't alter size
                     rowHeight = chordProLines[i]->getHeight();
+                } else if (chordProLines[i]->getProperties()["type"] == "new_page") {
+                    if (chordProTwoColumns) {
+                        // Calculate height to bottom of screen
+                        float nextPagePad = jmax(viewportRight.getHeight() * (pageIndex + 1) - runningHeight, 0.f);
+                        rowHeight = nextPagePad;
+                    } else {
+                        rowHeight = 0.f;
+                    }
                 } else {
                     rowHeight = 40.0 * chordProFontSize;
                 }
@@ -986,6 +994,8 @@ void ExtensionWindow::resized()
                                     addChordProLine(i+1, "wrap");
                                     chordProLines[i+1]->getProperties().set("type", chordProLines[i]->getProperties()["type"]);
                                     chordProLines[i+1]->getProperties().set("section", chordProLines[i]->getProperties()["section"]);
+                                    chordProLines[i+1]->getProperties().set("textcolour", chordProLines[i]->getProperties()["textcolour"]);
+                                    chordProLines[i+1]->getProperties().set("chordcolour", chordProLines[i]->getProperties()["chordcolour"]);
                                     chordProLines[i+1]->setLookAndFeel(&chordProLines[i]->getLookAndFeel());
                                 }
                                 // Update label text on both wrapped lines
@@ -2425,10 +2435,21 @@ void ExtensionWindow::chordProProcessText(String text) {
                         directiveValue = directiveName.substring(0,1).toUpperCase() + directiveName.substring(1,directiveName.length()) + ": " + directiveValue;
                         extension->chordProLines[i]->setVisible(false);
                     }
-                } else {
-                    extension->chordProLines[i]->setVisible(false);
+                } else { // Directive with no value
                     directiveName = line.removeCharacters(" ");
                     directiveValue = "";
+                    if (directiveName == "textcolour") {
+                        textColourLine = false;
+                        textColour = "";
+                        extension->chordProLines[i]->setVisible(false);
+                    } else if (directiveName == "chordcolour") {
+                        chordColourLine = false;
+                        chordColour = "";
+                        extension->chordProLines[i]->setVisible(false);
+
+                    } else if (directiveName  == "new_page" || directiveName == "np") {
+                        extension->chordProLines[i]->getProperties().set("type", "new_page");
+                    }
                 }
                 // Additional processing for multi-line directives or without values
                 if (directiveName == "start_of_tab" || directiveName == "sot") {
@@ -2455,16 +2476,6 @@ void ExtensionWindow::chordProProcessText(String text) {
                 } else if (directiveName.startsWith("start_of_")) {
                     firstSectionLine = true;
                     sectionLabel = directiveValue;
-                } else if (directiveName == "textcolour") {
-                    if (directiveValue == "") {
-                        textColourLine = false;
-                        textColour = "";
-                    }
-                } else if (directiveName == "chordcolour") {
-                    if (directiveValue == "") {
-                        chordColourLine = false;
-                        chordColour = "";
-                    }
                 } else {
                     firstSectionLine = false;
                 }
@@ -2515,8 +2526,10 @@ void ExtensionWindow::chordProProcessText(String text) {
                     sectionLabel = "";
                     firstSectionLine = false;
                 }
-                if (textColourLine || chordColourLine) {
+                if (textColourLine) {
                     extension->chordProLines[i]->getProperties().set("textcolour", textColour);
+                }
+                if (chordColourLine) {
                     extension->chordProLines[i]->getProperties().set("chordcolour", chordColour);
                 }
                 if (line.contains("[")) {
