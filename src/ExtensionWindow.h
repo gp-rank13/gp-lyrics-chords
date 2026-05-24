@@ -352,18 +352,18 @@ public:
     ColourChangeButton (const String& name = String())
         : TextButton (name)
     {
-        colourValue.addListener (this);
-        updateColour();
+      colourValue.addListener (this);
+      updateColour();
     }
 
     Value& getColourValueObject()
     {
-        return colourValue;
+      return colourValue;
     }
 
     void clicked() override
     {
-      auto  colourSelector = std::make_unique<ColourSelector>(
+      auto colourSelector = std::make_unique<ColourSelector>(
                     ColourSelector::showColourspace
                     | ColourSelector::showColourAtTop
                     | ColourSelector::editableColour
@@ -406,8 +406,8 @@ class MyDocumentWindow : public DocumentWindow
 
 };
 
-class ExtensionWindow  :  public juce::Component,
-                          public juce::Button::Listener
+class ExtensionWindow : public juce::Component,
+                        public juce::Button::Listener
 {
 public:
   ExtensionWindow ();
@@ -585,6 +585,7 @@ public:
 
  private:
   void log(String text);
+  void mouseMagnify(const MouseEvent &e, float scale) override;
   void chordProReset();
   void chordProUpdateDiagramColors();
   void chordProCalculateAutoScroll();
