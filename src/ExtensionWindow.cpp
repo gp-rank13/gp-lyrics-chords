@@ -2456,7 +2456,6 @@ void ExtensionWindow::chordProProcessText(String text) {
                                             numValue = option.getFloatValue();
                                         }
                                         extension->chordProLines[i]->getProperties().set("width", numValue);
-                                        //logToGP("Width: " + extension->chordProLines[i]->getProperties()["width"].toString().toStdString());
                                     } else if (option.startsWith("height=")) {
                                         option = option.replace("height=","");
                                         if (option.contains("%")) {
@@ -2465,7 +2464,6 @@ void ExtensionWindow::chordProProcessText(String text) {
                                             numValue = option.getFloatValue();
                                         }
                                         extension->chordProLines[i]->getProperties().set("height", numValue);
-                                        //logToGP("Height: " + extension->chordProLines[i]->getProperties()["height"].toString().toStdString());
                                     } else if (option.startsWith("scale=")) {
                                         option = option.replace("scale=","");
                                         if (option.contains("%")) {
@@ -2475,10 +2473,8 @@ void ExtensionWindow::chordProProcessText(String text) {
                                             if (numValue > 1.0 || numValue <= 0.0) numValue = 1.0;
                                         }
                                         extension->chordProLines[i]->getProperties().set("scale", numValue);
-                                        //logToGP("Scale: " + extension->chordProLines[i]->getProperties()["scale"].toString().toStdString());
                                     } else if (option.toLowerCase().startsWith("align=")) {
                                         extension->chordProLines[i]->getProperties().set("align", option.replace("align=",""));
-                                        //logToGP("Align: " + extension->chordProLines[i]->getProperties()["align"].toString().toStdString());
                                     }
                                 }
                             }
@@ -2953,7 +2949,6 @@ bool ExtensionWindow::addChordProImage(String path) {
         String chordProPath = (String)lib->getChordProFilenameForSong(lib->getCurrentSongIndex());
         String newPath = File(chordProPath).getParentDirectory().getFullPathName() + PATH_SEPARATOR() + path;
         file = File(newPath);
-        logToGP(newPath.toStdString());
     }
     Image image;
     if (chordProDarkMode) {
