@@ -2953,6 +2953,7 @@ bool ExtensionWindow::addChordProImage(String path) {
         String chordProPath = (String)lib->getChordProFilenameForSong(lib->getCurrentSongIndex());
         String newPath = File(chordProPath).getParentDirectory().getFullPathName() + PATH_SEPARATOR() + path;
         file = File(newPath);
+        logToGP(newPath.toStdString());
     }
     Image image;
     if (chordProDarkMode) {
