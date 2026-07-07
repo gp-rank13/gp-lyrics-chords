@@ -887,28 +887,76 @@ void ExtensionWindow::resized()
                 } else if (chordProLines[i]->getProperties()["type"] == "image") {
                     rowHeight = 0.0;
                     int imageIndex = chordProLines[i]->getProperties()["imageIndex"];
+
+                    // Original image attributes
                     float originalWidth = (float)(extension->chordProImages[imageIndex]->getImage().getWidth());
                     float originalHeight = (float)(extension->chordProImages[imageIndex]->getImage().getHeight());
-                    float ratio = originalWidth / (float)(viewportRight.getWidth() - 10);
-                    float newWidth = (float)(viewportRight.getWidth() - 10) / columns;
-                    if (chordProTwoColumns && chordProImagesOnly) newWidth = newWidth - (padding / 2.0);
-                    float newHeight = originalHeight / (ratio * columns);
-                    int imageX = 0;
-                    if (fitHeight && chordProImagesOnly) {
-                        newHeight = (float)(viewportRight.getHeight() - padding);
-                        newWidth = originalWidth / originalHeight * newHeight;
-                        imageX = juce::jmax(0, (int)((viewportRight.getWidth() - newWidth) / 2));
-                        if (chordProTwoColumns) imageX = juce::jmax(0, (int)((viewportRight.getWidth() - (newWidth * columns)) / 2));
-                    }
-                    rowHeight = newHeight;
-                    if (chordProTwoColumns && chordProImagesOnly && !fitHeight) {
-                        extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? 0 : newWidth + padding , runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
-                    } else if (chordProTwoColumns && chordProImagesOnly && fitHeight) {
-                        extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? imageX : imageX + newWidth + padding, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
+
+                    // Process "Images Only" ChordPro differently
+                    if (chordProImagesOnly) {
+                        float ratio = originalWidth / (float)(viewportRight.getWidth() - 10);
+                        float newWidth = (float)(viewportRight.getWidth() - 10) / columns;
+                        if (chordProTwoColumns) newWidth = newWidth - (padding / 2.0);
+                        float newHeight = originalHeight / (ratio * columns);
+                        int imageX = 0;
+
+                        if (fitHeight) {
+                            newHeight = (float)(viewportRight.getHeight() - padding);
+                            newWidth = originalWidth / originalHeight * newHeight;
+                            imageX = juce::jmax(0, (int)((viewportRight.getWidth() - newWidth) / 2));
+                            if (chordProTwoColumns) imageX = juce::jmax(0, (int)((viewportRight.getWidth() - (newWidth * columns)) / 2));
+                        }
+
+                        // Set image bounds
+                        if (chordProTwoColumns && !fitHeight) {
+                            extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? 0 : newWidth + padding , runningHeight, truncatePositiveToUnsignedInt(newWidth), newHeight);
+                        } else if (chordProTwoColumns && fitHeight) {
+                            extension->chordProImages[imageIndex]->setBounds((imageIndex % 2 == 0) ? imageX : imageX + newWidth + padding, runningHeight, truncatePositiveToUnsignedInt(newWidth), newHeight);
+                        } else {
+                            extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, (int)newWidth, (int)newHeight);
+                        }
+                        rowHeight = (chordProTwoColumns && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : newHeight + padding;
                     } else {
-                        extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, truncatePositiveToUnsignedInt(newWidth), rowHeight);
+                        // Adjusted width via ChordPro image options
+                        float imageWidth = 0.0;
+                        float ptToPx = 1.4;
+                        int pad = 10;
+                        float maxWidth = (float)(viewportRight.getWidth() - (pad * 2)) / columns;
+                        float chordProWidth = (float)chordProLines[i]->getProperties()["width"];
+                        if (chordProWidth > 0.0 && chordProWidth <= 1.0) { // Percentage
+                            imageWidth = maxWidth * chordProWidth;
+                        } else if ( chordProWidth > 1.0) { // Fixed width
+                            imageWidth = jmin(chordProWidth * ptToPx, maxWidth);
+                        } else {
+                            imageWidth = jmin(originalWidth, maxWidth);
+                        }
+
+                        // Adjusted scale via ChordPro image options
+                        float chordProScale = (float)chordProLines[i]->getProperties()["scale"];
+                        if (chordProScale > 0.0) {
+                            imageWidth = jmin(imageWidth * chordProScale, maxWidth);
+                        }
+
+                        // Adjusted height to retain image proportion
+                        float newHeight = imageWidth / (originalWidth / originalHeight);
+
+                        // Default to centring the image
+                        int imageX = jmax(0, ((viewportRight.getWidth() - (int)imageWidth) / 2));
+
+                        // Adjusted alignment via ChordPro image options
+                        String align = chordProLines[i]->getProperties()["align"];
+                        if (align == "center") {
+                            imageX = (viewportRight.getWidth() - imageWidth) / 2;
+                        } else if (align == "left") {
+                            imageX = pad;
+                        } else if (align == "right") {
+                            imageX = viewportRight.getWidth() - imageWidth - pad;
+                        }
+
+                        // Set image bounds
+                        extension->chordProImages[imageIndex]->setBounds(imageX, runningHeight, (int)imageWidth, (int)newHeight);
+                        rowHeight = newHeight + padding;
                     }
-                    rowHeight = (chordProTwoColumns && chordProImagesOnly && imageIndex % 2 == 0 && imageIndex < imageCount - 1) ? 0 : newHeight + padding;
                 } else if (chordProLines[i]->getProperties()["type"] == "diagramKeyboard") {
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
                     int x = leftPad;
@@ -952,8 +1000,11 @@ void ExtensionWindow::resized()
                 } else {
                     rowHeight = 40.0 * chordProFontSize;
                 }
+
+                // Set bounds for ChordPro row
                 int chordProX = 10;
                 int chordProPad = 10;
+
                 // Two pages layout
                 if (chordProTwoColumns && !chordProImagesOnly && runningHeight + rowHeight > viewportRight.getHeight() * (pageIndex + 1)){
                     runningHeight = 20.0;
@@ -962,12 +1013,49 @@ void ExtensionWindow::resized()
                     runningHeight += (viewportRight.getHeight() * pageIndex);
                 }
                 chordProX = columnIndex == 0 ? chordProPad : chordProContainer.getWidth() / columns + chordProPad;
-                auto bounds = Rectangle(chordProX, (int)runningHeight, (int)(chordProContainer.getWidth() / columns - chordProPad), (int)rowHeight);
+                auto bounds = Rectangle(chordProX, (int)runningHeight, (int)((chordProContainer.getWidth() - (chordProPad * 2)) / columns ), (int)rowHeight);
                 chordProLines[i]->setBounds(bounds);
-                // Adjust position of images for two column view
-                if (chordProLines[i]->getProperties()["type"] == "image" && chordProTwoColumns && !chordProImagesOnly) {
-                    int imageIndex = chordProLines[i]->getProperties()["imageIndex"];
-                    extension->chordProImages[imageIndex]->setBounds(bounds);
+
+                // Image/diagram adjustments
+                if (chordProTwoColumns) {
+
+                    // Adjust position of images for two column view
+                    if (chordProLines[i]->getProperties()["type"] == "image" && !chordProImagesOnly) {
+                        int imageIndex = chordProLines[i]->getProperties()["imageIndex"];
+                        int imageWidth = extension->chordProImages[imageIndex]->getWidth();
+                        imageWidth = jmin(imageWidth, bounds.getWidth());
+                        int imageX = 0;
+                        String align = chordProLines[i]->getProperties()["align"];
+                        if (align == "left") {
+                            imageX = bounds.getX();
+                        } else if (align == "right") {
+                            imageX = jmax(chordProPad, bounds.getX() + bounds.getWidth() - imageWidth);
+                        } else {
+                            imageX = jmax(chordProPad, (bounds.getX() + (bounds.getWidth() - imageWidth) / 2));
+                        }
+                        extension->chordProImages[imageIndex]->setBounds(bounds.withX(imageX).withWidth(imageWidth));
+                    }
+
+                    // Adjust position of fretboard diagrams for two column view
+                    if (chordProLines[i]->getProperties()["type"] == "diagramFretboard") {
+                        for (int i = 0; i < chordProDiagramFretboard.size(); ++i) {
+                            int newX = bounds.getX() + chordProDiagramFretboard[i]->getX();
+                            chordProDiagramFretboard[i]->setBounds(newX, runningHeight, CP_FRETBOARD_WIDTH * chordProFontSize, rowHeight);
+                        }
+                    } else
+
+                    // Adjust position of keyboard diagrams for two column view
+                    if (chordProLines[i]->getProperties()["type"] == "diagramKeyboard") {
+                        int baseY = jmax(chordProDiagramKeyboard[0]->getY(), 0);
+                        for (int i = 0; i < chordProDiagramKeyboard.size(); ++i) {
+                            int newX = bounds.getX() + chordProDiagramKeyboard[i]->getX();
+                            int offsetY = chordProDiagramKeyboard[i]->getY() - baseY;
+                            int newW = chordProDiagramKeyboard[i]->getWidth();
+                            int newH = chordProDiagramKeyboard[i]->getHeight();
+                            chordProDiagramKeyboard[i]->setBounds(newX, runningHeight + offsetY, newW, newH);
+                        }
+                    }
+
                 }
                 runningHeight += rowHeight;
 
@@ -987,7 +1075,7 @@ void ExtensionWindow::resized()
                     int leftPad = chordProLeftLabels ? CP_EXPANDED_LEFT_MARGIN * chordProFontSize : CP_DEFAULT_LEFT_MARGIN;
                     String excludeChords = std::regex_replace(chordProLines[i]->getProperties()["originalText"].toString().toStdString(), std::regex("\\[(.*?)\\]"), "");
                     int labelWidth = labelFont.getStringWidth(excludeChords) + leftPad;
-                    if (labelWidth > chordProContainer.getWidth() / columns) {
+                    if (labelWidth > (chordProContainer.getWidth() - (chordProPad * 2)) / columns) {
                         if (chordProLines[i]->getName() != "wrap") {
                             if (i < chordProLines.size() - 1) {
                                 if (chordProLines[i+1]->getName() != "wrap") { // Wrapped line doesn't yet exist - create one
@@ -2279,15 +2367,16 @@ void ExtensionWindow::chordProProcessText(String text) {
     bool firstSectionLine = false;
     extension->chordProReset();
     bool chordProNonImage = false;
-
     for (int i = 0; i < lines.size() + 1; ++i) {
-        line = lines[i].toStdString();
+        //line = lines[i].toStdString();
+        line = lines[i];
         extension->addChordProLine();
         if (line.trim() != "") firstLineWithContent = true;
         if (firstLineWithContent) {
             if (line.contains("{")) { // Directive
                 extension->chordProLines[i]->getProperties().set("type", "directive");
-                line = line.removeCharacters("{}\"");
+                //line = line.removeCharacters("{}\"");
+                line = line.removeCharacters("{}");
                 if (line.contains(":")) {
                     directiveParts = StringArray::fromTokens(line,":",""); // Split directive
                     directiveName = directiveParts[0].removeCharacters(" ").toLowerCase();
@@ -2340,18 +2429,57 @@ void ExtensionWindow::chordProProcessText(String text) {
                         extension->chordProLines[i]->getProperties().set("type", "label");
                         extension->chordProLines[i]->setVisible(!chordProLeftLabels);
                     } else if (directiveName == "image") {
-                            #if JUCE_WINDOWS
-                                if (directiveParts.size() == 3) { // File path had a drive letter e.g. C:
-                                    directiveValue = directiveParts[1].trim() + ":" + directiveParts[2].trim();
-                                }
-                            #endif
-                            String path = directiveValue.removeCharacters("\"");
-                            bool isValid = extension->addChordProImage(path);
-                            if (isValid) {
-                                extension->chordProLines[i]->getProperties().set("imageIndex", extension->chordProImages.size() - 1);
-                                extension->chordProLines[i]->getProperties().set("type", "image");
+                        #if JUCE_WINDOWS
+                            if (directiveParts.size() == 3) { // File path had a drive letter e.g. C:
+                                directiveValue = directiveParts[1].trim() + ":" + directiveParts[2].trim();
                             }
-                            directiveValue = "";
+                        #endif
+                        // Assume file path is first item
+                        StringArray imageParts = StringArray::fromTokens(directiveValue.replace("src=","").trim(), true);
+                        String path = imageParts[0].removeCharacters("\"");
+                        bool isValid = extension->addChordProImage(path);
+                        if (isValid) {
+                            extension->chordProLines[i]->getProperties().set("imageIndex", extension->chordProImages.size() - 1);
+                            extension->chordProLines[i]->getProperties().set("type", "image");
+
+                            // Additional parts will be image options
+                            imageParts.removeEmptyStrings();
+                            if (imageParts.size() > 1) {
+                                for (int j = 1; j < imageParts.size(); ++j) {
+                                    String option = imageParts[j].removeCharacters("\"").toLowerCase();
+                                    float numValue = 0.0;
+                                    if (option.startsWith("width=")) {
+                                        option = option.replace("width=","");
+                                        if (option.contains("%")) {
+                                            numValue = option.replace("%","").getFloatValue() / 100.0;
+                                        } else {
+                                            numValue = option.getFloatValue();
+                                        }
+                                        extension->chordProLines[i]->getProperties().set("width", numValue);
+                                    } else if (option.startsWith("height=")) {
+                                        option = option.replace("height=","");
+                                        if (option.contains("%")) {
+                                            numValue = option.replace("%","").getFloatValue() / 100.0;
+                                        } else {
+                                            numValue = option.getFloatValue();
+                                        }
+                                        extension->chordProLines[i]->getProperties().set("height", numValue);
+                                    } else if (option.startsWith("scale=")) {
+                                        option = option.replace("scale=","");
+                                        if (option.contains("%")) {
+                                            numValue = option.replace("%","").getFloatValue() / 100.0;
+                                        } else {
+                                            numValue = option.getFloatValue();
+                                            if (numValue > 1.0 || numValue <= 0.0) numValue = 1.0;
+                                        }
+                                        extension->chordProLines[i]->getProperties().set("scale", numValue);
+                                    } else if (option.toLowerCase().startsWith("align=")) {
+                                        extension->chordProLines[i]->getProperties().set("align", option.replace("align=",""));
+                                    }
+                                }
+                            }
+                        }
+                        directiveValue = "";
                     } else if (directiveName == "define") {
                         StringArray definition = StringArray::fromTokens(directiveValue, false);
                         String chord = definition[0];
@@ -2595,7 +2723,7 @@ void ExtensionWindow::chordProProcessText(String text) {
     int rowCounter = 0;
     for (int i = 0; i < extension->chordProLines.size(); ++i) {
         if (extension->chordProLines[i]->isVisible()) {
-            if (extension->chordProLines[i]->getText() == "" && extension->chordProLines[i]->getProperties()["type"] != "image" && extension->chordProLines[i]->getProperties()["type"] != "diagramKeyboard" && extension->chordProLines[i]->getProperties()["type"] != "diagramFretboard") {
+            if (extension->chordProLines[i]->getText() == "" && extension->chordProLines[i]->getProperties()["type"] != "image" && extension->chordProLines[i]->getProperties()["type"] != "diagramKeyboard" && extension->chordProLines[i]->getProperties()["type"] != "diagramFretboard" && extension->chordProLines[i]->getProperties()["type"] != "new_page") {
                 if (rowCounter - 1 == lastBlank) {
                     extension->chordProLines[i]->setVisible(false);
                  }
@@ -2817,6 +2945,11 @@ void ExtensionWindow::addChordProLine(int atIndex, String name) {
 bool ExtensionWindow::addChordProImage(String path) {
     bool isValid = false;
     File file = File(path);
+    if (!file.existsAsFile()) { // Assume file name only
+        String chordProPath = (String)lib->getChordProFilenameForSong(lib->getCurrentSongIndex());
+        String newPath = File(chordProPath).getParentDirectory().getFullPathName() + PATH_SEPARATOR() + path;
+        file = File(newPath);
+    }
     Image image;
     if (chordProDarkMode) {
         String pathDarkMode = file.getFileNameWithoutExtension() + CP_DARK_MODE_FILE_SUFFIX + file.getFileExtension();
